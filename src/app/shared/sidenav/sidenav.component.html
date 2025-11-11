@@ -1,0 +1,11 @@
+<div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+  <h2 class="text-lg font-semibold text-gray-800">Punto de Venta</h2>
+</div>
+
+<mat-nav-list class="py-2">
+  <a *ngFor="let it of items" mat-list-item [routerLink]="it.link" routerLinkActive="!text-indigo-600 bg-indigo-50"
+    class="text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg mx-2 my-1">
+    <mat-icon matListIcon>{{ it.icon }}</mat-icon>
+    <span matLine>{{ it.label }}</span>
+  </a>
+</mat-nav-list>

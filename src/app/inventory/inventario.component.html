@@ -1,0 +1,171 @@
+<section class="h-full flex flex-col">
+    <!-- Header superior -->
+    <div class="flex items-start justify-between gap-3 pb-3">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">Inventario</h1>
+        <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+          <div class="inline-flex items-center gap-2">
+            <mat-icon class="text-slate-500">inventory_2</mat-icon>
+            <span> Total de referencias </span>
+            <span class="font-semibold">{{ filtered().length }}</span>
+          </div>
+          <div class="inline-flex items-center gap-2">
+            <mat-icon class="text-slate-500">payments</mat-icon>
+            <span> Costo total de inventario </span>
+            <span class="font-semibold">Q {{ totalCost() | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones derechas -->
+      <div class="flex flex-wrap items-center gap-3">
+        <button mat-stroked-button class="rounded-full px-4" (click)="openCategories()">
+          <mat-icon class="mr-2">sell</mat-icon> Categorías
+        </button>
+
+        <button mat-stroked-button class="rounded-full px-4" [matMenuTriggerFor]="createMenu">
+          Crear productos <mat-icon class="ml-1">expand_more</mat-icon>
+        </button>
+        <mat-menu #createMenu="matMenu">
+          <button mat-menu-item (click)="createProduct()">
+            <mat-icon>add_circle</mat-icon>
+            <span>Crear productos manualmente</span>
+          </button>
+          <button mat-menu-item disabled>
+            <mat-icon>description</mat-icon>
+            <span>Subir productos desde Excel</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap items-center gap-3 py-3">
+      <mat-form-field appearance="outline" class="flex-1 min-w-[260px]">
+        <mat-label>Buscar por nombre</mat-label>
+        <input matInput [formControl]="form.controls.search" (input)="applySearch()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <button mat-stroked-button class="rounded-xl px-4">
+        <mat-icon class="mr-2">qr_code_scanner</mat-icon> Catálogo virtual
+      </button>
+
+      <button mat-flat-button color="primary" class="rounded-xl px-4">
+        <mat-icon class="mr-2">shopping_basket</mat-icon> Registrar compras
+      </button>
+
+      <button mat-stroked-button class="rounded-xl px-4">
+        <mat-icon class="mr-2">download</mat-icon> Descargar
+      </button>
+    </div>
+
+    <!-- Chips -->
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <button mat-stroked-button class="rounded-full px-3 py-1"
+              [color]="selectedCategory() === null ? 'primary' : undefined"
+              (click)="selectCategory(null)">Ver todos</button>
+
+      <button mat-stroked-button class="rounded-full px-3 py-1"
+              *ngFor="let c of categories()"
+              [color]="selectedCategory() === c ? 'primary' : undefined"
+              (click)="selectCategory(c)">{{ c }}</button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <table mat-table [dataSource]="filtered()" class="w-full">
+        <!-- Col: Producto -->
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-left text-slate-600">Producto</th>
+          <td mat-cell *matCellDef="let p" class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <img [src]="p.image || ''" class="w-10 h-10 rounded-md bg-gray-100 object-cover" alt="" />
+              <a class="font-medium text-slate-800 underline">{{ p.name }}</a>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Col: Precio -->
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef class="px-3 py-4 text-left text-slate-600">Precio</th>
+          <td mat-cell *matCellDef="let p" class="px-3 py-3">
+            <mat-form-field appearance="outline" class="w-36">
+              <input matInput type="number" min="0" [value]="p.price" (change)="setPrice(p, $any($event.target).value)" />
+              <span matPrefix class="mr-1">Q</span>
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Col: Costo -->
+        <ng-container matColumnDef="cost">
+          <th mat-header-cell *matHeaderCellDef class="px-3 py-4 text-left text-slate-600">Costo</th>
+          <td mat-cell *matCellDef="let p" class="px-3 py-3">
+            <mat-form-field appearance="outline" class="w-36">
+              <input matInput type="number" min="0" [value]="p.cost" (change)="setCost(p, $any($event.target).value)" />
+              <span matPrefix class="mr-1">Q</span>
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Col: Stock -->
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef class="px-3 py-4 text-left text-slate-600">Cantidad disponible</th>
+          <td mat-cell *matCellDef="let p" class="px-3 py-3">
+            <mat-form-field appearance="outline" class="w-28">
+              <input matInput type="number" min="0" [value]="p.stock" (change)="setStock(p, $any($event.target).value)" />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Col: Ganancia -->
+        <ng-container matColumnDef="profit">
+          <th mat-header-cell *matHeaderCellDef class="px-3 py-4 text-left text-slate-600">Ganancia</th>
+          <td mat-cell *matCellDef="let p" class="px-3 py-3">
+            <div class="flex items-center gap-2">
+              <span>Q {{ profitAmount(p) | number:'1.2-2' }}</span>
+              <span class="inline-block text-xs px-2 py-1 rounded-full"
+                    [class.bg-emerald-100]="profitPercent(p) >= 0"
+                    [class.text-emerald-700]="profitPercent(p) >= 0"
+                    [class.bg-rose-100]="profitPercent(p) < 0"
+                    [class.text-rose-700]="profitPercent(p) < 0">
+                {{ profitPercent(p) | number:'1.0-0' }}%
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: cols;" class="hover:bg-slate-50"></tr>
+      </table>
+    </div>
+
+   <!-- SIDE SHEET: Categorías -->
+<ng-container *ngIf="drawerOpened">
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/30 z-40" (click)="drawerOpened=false"></div>
+
+  <!-- Panel derecho -->
+  <div class="fixed inset-y-0 right-0 w-[420px] max-w-full bg-white z-50 shadow-xl">
+    <div class="p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-semibold text-slate-800">Categorías</h3>
+        <button mat-icon-button (click)="drawerOpened=false"><mat-icon>close</mat-icon></button>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <button mat-stroked-button color="primary" class="w-full rounded-xl h-14 justify-start">
+          <mat-icon class="mr-3">add</mat-icon> Crear Nueva Categoría
+        </button>
+
+        <div class="rounded-xl border border-slate-200 divide-y">
+          <button class="w-full text-left p-4 hover:bg-slate-50 flex items-center justify-between">
+            <span><mat-icon class="mr-2">label</mat-icon> Bocinas</span>
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+  </section>

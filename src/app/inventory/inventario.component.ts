@@ -1,0 +1,107 @@
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule, CurrencyPipe, NgFor, NgIf } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms'
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatMenuModule } from '@angular/material/menu';
+import { computed, signal } from '@angular/core';
+import { MatSidenavModule } from '@angular/material/sidenav';
+
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  cost: number;
+  stock: number;
+  image?: string | null;
+  category?: string;
+};
+
+@Component({
+  standalone: true,
+  selector: 'app-inventario',
+  templateUrl: './inventario.component.html',
+  styleUrls: ['./inventario.component.css'],
+  imports: [
+    CommonModule,
+    NgFor,
+    NgIf,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatTabsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatMenuModule,
+    MatIconModule,
+    MatDatepickerModule,
+    MatTableModule,
+    MatSidenavModule,
+  ]
+})
+export default class InventarioComponent implements OnInit {
+
+  private fb = inject(FormBuilder);
+
+  // Mock data (con categorías)
+  data = signal<Product[]>([
+    { id: '1', name: 'Bocina JBL 700XL', price: 365, cost: 300, stock: 1, image: null, category: 'Bocinas' },
+    { id: '2', name: 'Folder', price: 1, cost: 0.5, stock: 74, image: null, category: 'Papelería' },
+  ]);
+
+  // filtros / estado UI
+  form = this.fb.group({ search: [''] });
+  selectedCategory = signal<string | null>(null);
+  drawerOpened = false;
+
+  categories = computed(() => {
+    const set = new Set(this.data().map(p => p.category).filter(Boolean) as string[]);
+    return Array.from(set);
+  });
+
+  filtered = computed(() => {
+    const q = (this.form.value.search || '').toString().toLowerCase().trim();
+    const cat = this.selectedCategory();
+    return this.data().filter(p => {
+      const byText = !q || p.name.toLowerCase().includes(q);
+      const byCat = !cat || p.category === cat;
+      return byText && byCat;
+    });
+  });
+
+  cols = ['product', 'price', 'cost', 'stock', 'profit'];
+
+  totalCost = computed(() =>
+    this.data().reduce((a, c) => a + (c.cost * c.stock), 0)
+  );
+
+  // acciones
+  openCategories() { this.drawerOpened = true; }
+  createProduct() { /* abrir dialog o navegar */ }
+
+  selectCategory(c: string | null) { this.selectedCategory.set(c); }
+  applySearch() { /* hook para buscar en API */ }
+
+  // ediciones inline
+  setPrice(p: Product, v: number) { p.price = Number(v) || 0; this.data.set([...this.data()]); }
+  setCost(p: Product, v: number) { p.cost = Number(v) || 0; this.data.set([...this.data()]); }
+  setStock(p: Product, v: number) { p.stock = Number(v) || 0; this.data.set([...this.data()]); }
+
+  // ganancias
+  profitAmount = (p: Product) => (p.price - p.cost);
+  profitPercent = (p: Product) => p.price ? ((p.price - p.cost) / p.price) * 100 : 0;
+
+  constructor() { }
+
+  ngOnInit() {
+  }
+
+}
