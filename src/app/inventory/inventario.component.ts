@@ -24,6 +24,8 @@ type Product = {
   category?: string;
 };
 
+type StockFilter = 'all' | 'low' | 'out';
+
 @Component({
   standalone: true,
   selector: 'app-inventario',
@@ -55,25 +57,47 @@ export default class InventarioComponent implements OnInit {
   data = signal<Product[]>([
     { id: '1', name: 'Bocina JBL 700XL', price: 365, cost: 300, stock: 1, image: null, category: 'Bocinas' },
     { id: '2', name: 'Folder', price: 1, cost: 0.5, stock: 74, image: null, category: 'Papelería' },
+    { id: '3', name: 'Cartulina', price: 2.5, cost: 1, stock: 25, image: null, category: 'Papelería' },
+    { id: '4', name: 'Adaptador Ethernet', price: 35, cost: 20, stock: 4, image: null, category: 'Informatica' },
+    { id: '5', name: 'USB', price: 50, cost: 15, stock: 0, image: null, category: 'Informatica' },
+    { id: '6', name: 'Lapiz', price: 50, cost: 15, stock: 0, image: null, category: 'papeleria' },
   ]);
 
-  // filtros / estado UI
+ // filtros / estado UI
   form = this.fb.group({ search: [''] });
   selectedCategory = signal<string | null>(null);
+  selectedStockFilter = signal<StockFilter>('all');  // 🔹 nuevo
   drawerOpened = false;
+
+  // métricas de stock
+  lowStockCount = computed(() =>
+    this.data().filter(p => p.stock === 1 || p.stock === 2).length
+  );
+  outOfStockCount = computed(() =>
+    this.data().filter(p => p.stock === 0).length
+  );
 
   categories = computed(() => {
     const set = new Set(this.data().map(p => p.category).filter(Boolean) as string[]);
     return Array.from(set);
   });
 
+
   filtered = computed(() => {
     const q = (this.form.value.search || '').toString().toLowerCase().trim();
     const cat = this.selectedCategory();
+    const f  = this.selectedStockFilter();
+
     return this.data().filter(p => {
-      const byText = !q || p.name.toLowerCase().includes(q);
-      const byCat = !cat || p.category === cat;
-      return byText && byCat;
+      const byText  = !q || p.name.toLowerCase().includes(q);
+      const byCat   = !cat || p.category === cat;
+      const byStock =
+        f === 'all'
+          ? true
+          : f === 'low'
+            ? (p.stock === 1 || p.stock === 2)
+            : (p.stock === 0); // 'out'
+      return byText && byCat && byStock;
     });
   });
 
@@ -89,6 +113,21 @@ export default class InventarioComponent implements OnInit {
 
   selectCategory(c: string | null) { this.selectedCategory.set(c); }
   applySearch() { /* hook para buscar en API */ }
+
+    // 🔹 Filtro de stock
+  selectStockFilter(f: StockFilter) {
+    // si ya está seleccionado, togglear a 'all'
+    if (this.selectedStockFilter() === f) {
+      this.selectedStockFilter.set('all');
+    } else {
+      this.selectedStockFilter.set(f);
+    }
+  }
+  clearAllFilters() {
+    this.selectedCategory.set(null);
+    this.selectedStockFilter.set('all');
+    this.form.patchValue({ search: '' });
+  }
 
   // ediciones inline
   setPrice(p: Product, v: number) { p.price = Number(v) || 0; this.data.set([...this.data()]); }

@@ -1,0 +1,11 @@
+
+
+/* Header sticky dentro del contenedor con overflow */
+.sticky-th {
+  position: sticky;
+  top: 0;
+  background: #ffffff; /* fondo para que no se vea el contenido detrás */
+  z-index: 1;
+  /* opcional: línea inferior para separar visualmente */
+  box-shadow: 0 1px 0 0 rgba(0,0,0,0.06);
+}
