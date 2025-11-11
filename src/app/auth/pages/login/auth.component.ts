@@ -7,6 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -26,12 +28,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   ]
 })
 
-export default class AuthComponent  {
-
+export default class AuthComponent {
   private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
   hide = true;
   loading = false;
+  errorMsg: string | null = null;
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -42,11 +46,24 @@ export default class AuthComponent  {
   get password() { return this.form.controls.password; }
 
   submit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.loading) return;
+
     this.loading = true;
-    // TODO: llamar a tu AuthService
-    // this.auth.login(this.form.value.email!, this.form.value.password!).subscribe(...)
-    setTimeout(() => this.loading = false, 800); // demo
+    this.errorMsg = null;
+
+    const { email, password } = this.form.value;
+
+    this.auth.login(email!, password!).subscribe({
+      next: () => {
+        this.loading = false;
+        this.router.navigateByUrl('/'); // a tu área privada
+      },
+      error: (err) => {
+        // puedes inspeccionar err.status (401, 429, etc.)
+        this.errorMsg = 'Credenciales inválidas o sesión no autorizada.';
+        this.loading = false;
+      },
+    });
   }
 
 }
