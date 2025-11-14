@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -29,6 +29,7 @@ import { Router } from '@angular/router';
 })
 
 export default class AuthComponent {
+
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
@@ -45,23 +46,22 @@ export default class AuthComponent {
   get email() { return this.form.controls.email; }
   get password() { return this.form.controls.password; }
 
+
   submit() {
     if (this.form.invalid || this.loading) return;
 
     this.loading = true;
-    this.errorMsg = null;
-
     const { email, password } = this.form.value;
 
     this.auth.login(email!, password!).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigateByUrl('/'); // a tu área privada
+        this.router.navigateByUrl('/home');
       },
       error: (err) => {
-        // puedes inspeccionar err.status (401, 429, etc.)
-        this.errorMsg = 'Credenciales inválidas o sesión no autorizada.';
         this.loading = false;
+        console.error(err);
+        // luego metemos snackbar chulo
       },
     });
   }

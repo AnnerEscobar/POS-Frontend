@@ -55,12 +55,12 @@ export default class InventarioComponent implements OnInit {
 
   // Mock data (con categorías)
   data = signal<Product[]>([
-    { id: '1', name: 'Bocina JBL 700XL', price: 365, cost: 300, stock: 1, image: null, category: 'Bocinas' },
-    { id: '2', name: 'Folder', price: 1, cost: 0.5, stock: 74, image: null, category: 'Papelería' },
-    { id: '3', name: 'Cartulina', price: 2.5, cost: 1, stock: 25, image: null, category: 'Papelería' },
-    { id: '4', name: 'Adaptador Ethernet', price: 35, cost: 20, stock: 4, image: null, category: 'Informatica' },
-    { id: '5', name: 'USB', price: 50, cost: 15, stock: 0, image: null, category: 'Informatica' },
-    { id: '6', name: 'Lapiz', price: 50, cost: 15, stock: 0, image: null, category: 'papeleria' },
+    { id: '1', name: 'Bocina JBL 700XL', price: 365, cost: 300, stock: 1, image: 'https://tse2.mm.bing.net/th/id/OIP.-kiFsy6zqhmiOwWqzruDDgHaEy?cb=ucfimgc2&rs=1&pid=ImgDetMain&o=7&rm=3', category: 'Bocinas' },
+    { id: '2', name: 'Folder Manila T/oficio', price: 1, cost: 0.5, stock: 74, image: 'https://tse2.mm.bing.net/th/id/OIP.kE1FXQ9mANs0NjkW4eXBkAHaHa?cb=ucfimgc2&rs=1&pid=ImgDetMain&o=7&rm=3', category: 'Papelería' },
+    { id: '3', name: 'Cartulina', price: 2.5, cost: 1, stock: 25, image: 'https://cafesacomercial.com/wp-content/uploads/2023/03/cartulina-blanca-22-27.jpg', category: 'Papelería' },
+    { id: '4', name: 'Adaptador Ethernet', price: 35, cost: 20, stock: 4, image: 'https://tse2.mm.bing.net/th/id/OIP.DgUUcV3TeGKvFSYHfqtfzAHaHn?cb=ucfimgc2&rs=1&pid=ImgDetMain&o=7&rm=3', category: 'Informatica' },
+    { id: '5', name: 'USB', price: 50, cost: 15, stock: 0, image:'https://tse4.mm.bing.net/th/id/OIP.oZY6U7RYT2hp29UC5tM6VgHaHa?cb=ucfimgc2&rs=1&pid=ImgDetMain&o=7&rm=3', category: 'Informatica' },
+    { id: '6', name: 'Lapiz', price: 50, cost: 15, stock: 0, image: 'https://papershop.com.ec/wp-content/uploads/2020/08/LAPIZ-MONGOL.jpg', category: 'papeleria' },
   ]);
 
  // filtros / estado UI

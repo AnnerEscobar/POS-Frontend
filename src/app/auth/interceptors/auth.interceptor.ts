@@ -1,39 +1,60 @@
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpHandlerFn, HttpRequest, type HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError, tap, switchMap } from 'rxjs';
 import { AuthStateService } from '../services/auth-state.service';
+import { AuthService } from '../services/auth.service';
+import { catchError, switchMap, throwError } from 'rxjs';
 
-export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn) => {
+let isRefreshing = false;
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const state = inject(AuthStateService);
-  const httpBackend = inject(HttpBackend);
-  const bareHttp = new HttpClient(httpBackend); // evita recursión del interceptor
+  const auth = inject(AuthService);
 
-  let headers: { [k: string]: string } = {};
-  if (state.accessToken()) headers['Authorization'] = `Bearer ${state.accessToken()}`;
-  if (state.csrfToken()) headers['X-CSRF-Token'] = state.csrfToken()!;
+  const accessToken = state.accessToken();
 
-  const authReq = req.clone({ setHeaders: headers, withCredentials: true });
+  let cloned = req;
 
-  return next(authReq).pipe(
-    catchError((err: HttpErrorResponse) => {
-      if (err.status !== 401) return throwError(() => err);
+  if (accessToken) {
+    cloned = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  }
 
-      // intentar un refresh usando el cliente "bare"
-      return bareHttp.post<{ accessToken: string; csrfToken: string }>(
-        '/auth/refresh', {}, { withCredentials: true }
-      ).pipe(
-        tap(({ accessToken, csrfToken }) => state.setSession(accessToken, csrfToken, state.user())),
+  return next(cloned).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status !== 401) {
+        return throwError(() => error);
+      }
+
+      const user = state.user();
+      const refreshToken = state.refreshToken();
+
+      // si no hay forma de refrescar, cerramos sesión
+      if (!user || !refreshToken || isRefreshing) {
+        auth.logout();
+        return throwError(() => error);
+      }
+
+      isRefreshing = true;
+
+      return auth.refresh().pipe(
         switchMap(() => {
-          const retried = req.clone({
+          isRefreshing = false;
+          const newAccess = state.accessToken();
+          const retryReq = req.clone({
             setHeaders: {
-              ...(state.accessToken() ? { Authorization: `Bearer ${state.accessToken()}` } : {}),
-              ...(state.csrfToken() ? { 'X-CSRF-Token': state.csrfToken()! } : {}),
+              Authorization: newAccess ? `Bearer ${newAccess}` : '',
             },
-            withCredentials: true,
           });
-          return next(retried);
+          return next(retryReq);
         }),
-        catchError(refreshErr => throwError(() => refreshErr))
+        catchError(err => {
+          isRefreshing = false;
+          auth.logout();
+          return throwError(() => err);
+        })
       );
     })
   );

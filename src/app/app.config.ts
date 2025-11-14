@@ -5,7 +5,6 @@ import { provideNativeDateAdapter, MAT_DATE_LOCALE } from '@angular/material/cor
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor, AuthService } from './auth';
-import { fakeBackendInterceptor } from './auth/interceptors/fake-backend.interceptor';
 
 
 // Intenta refrescar sesión al boot (ignora errores)
@@ -22,6 +21,6 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideNativeDateAdapter(),{ provide: MAT_DATE_LOCALE, useValue: 'es' },
-    provideHttpClient(withInterceptors([authInterceptor, fakeBackendInterceptor]))
+    provideHttpClient(withInterceptors([authInterceptor]))
   ]
 };

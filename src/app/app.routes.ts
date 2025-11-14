@@ -1,16 +1,17 @@
 import { Routes } from '@angular/router';
-import { AuthGuard, PublicGuard } from './auth';
+import { authGuard } from './auth/guards/auth.guard';
+import { publicGuard } from './auth/guards/public.guard';
 
 export const routes: Routes = [
 
   {
     path: 'login', loadComponent: () => import('./auth/pages/login/auth.component'),
-    canActivate: [PublicGuard],
+    canActivate: [publicGuard],
   },
   {
     //path principal del home
     path: 'home', loadComponent: () => import('./layouts/home-layout/home-layout.component'),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
     children: [
       {
         //path principal del inventario
@@ -26,7 +27,7 @@ export const routes: Routes = [
     ]
   },
   {
-    path: '', pathMatch: 'full',redirectTo: 'home/inventory'
+    path: '', pathMatch: 'full', redirectTo: 'home'
   },
-  { path: '**', redirectTo: 'home/inventory' },
+  { path: '**', redirectTo: 'home' },
 ];

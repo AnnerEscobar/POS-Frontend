@@ -1,28 +1,42 @@
 import { Injectable, signal } from '@angular/core';
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+}
+
+export interface LoginResponse {
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class AuthStateService {
-
+  user = signal<AuthUser | null>(null);
   accessToken = signal<string | null>(null);
-  csrfToken = signal<string | null>(null);
-  user = signal<{ id?: string; email?: string; role?: string } | null>(null);
+  refreshToken = signal<string | null>(null);
 
-  setSession(access: string, csrf: string, user?: any) {
-    this.accessToken.set(access);
-    this.csrfToken.set(csrf);
-    this.user.set(user ?? null);
+  setSession(res: LoginResponse) {
+    this.user.set(res.user);
+    this.accessToken.set(res.accessToken);
+    this.refreshToken.set(res.refreshToken);
   }
-  clearSession() {
-    this.accessToken.set(null);
-    this.csrfToken.set(null);
+
+  updateTokens(accessToken: string, refreshToken: string) {
+    this.accessToken.set(accessToken);
+    this.refreshToken.set(refreshToken);
+  }
+
+  clear() {
     this.user.set(null);
+    this.accessToken.set(null);
+    this.refreshToken.set(null);
   }
+
   isAuthenticated() {
     return !!this.accessToken();
   }
-
-  constructor() { }
-
 }
