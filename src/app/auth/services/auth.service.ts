@@ -46,7 +46,7 @@ export class AuthService {
   logout() {
     // Avisamos al backend pero no esperamos respuesta
     this.http.post(`${this.api}/auth/logout`, {}).subscribe({
-      error: () => {},
+      error: () => { },
     });
 
     this.state.clear();

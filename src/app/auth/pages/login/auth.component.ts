@@ -56,7 +56,7 @@ export default class AuthComponent {
     this.auth.login(email!, password!).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigateByUrl('/home');
+        this.router.navigateByUrl('/home/inventory');
       },
       error: (err) => {
         this.loading = false;
