@@ -12,9 +12,17 @@
     </div>
 
     <!-- FAB para abrir menú en mobile -->
-    <button mat-fab class="fab-safe lg:hidden z-50 shadow-md fixed bottom-6 right-6" color="primary"
-      (click)="toggleSidenav()" aria-label="Abrir menú">
-      <mat-icon>menu</mat-icon>
-    </button>
+   <!-- FAB para abrir menú en mobile -->
+<div class="md:hidden">
+  <button
+    mat-fab
+    class="fab-safe z-50 shadow-md fixed bottom-6 right-6"
+    color="primary"
+    (click)="toggleSidenav()"
+    aria-label="Abrir menú">
+    <mat-icon>menu</mat-icon>
+  </button>
+</div>
+
   </mat-sidenav-content>
 </mat-sidenav-container>

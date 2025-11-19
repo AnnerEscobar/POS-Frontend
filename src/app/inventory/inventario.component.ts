@@ -13,6 +13,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMenuModule } from '@angular/material/menu';
 import { computed, signal } from '@angular/core';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { Router } from '@angular/router';
 
 type Product = {
   id: string;
@@ -52,6 +53,7 @@ type StockFilter = 'all' | 'low' | 'out';
 export default class InventarioComponent implements OnInit {
 
   private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   // Mock data (con categorías)
   data = signal<Product[]>([
@@ -109,7 +111,7 @@ export default class InventarioComponent implements OnInit {
 
   // acciones
   openCategories() { this.drawerOpened = true; }
-  createProduct() { /* abrir dialog o navegar */ }
+  createProduct() { this.router.navigate(['/home/inventory/add-product']); }
 
   selectCategory(c: string | null) { this.selectedCategory.set(c); }
   applySearch() { /* hook para buscar en API */ }

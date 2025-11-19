@@ -15,12 +15,22 @@ export const routes: Routes = [
     children: [
       {
         //path principal del inventario
-        path: 'inventory', loadComponent: () => import('./inventory/inventario.component'),
+        path: 'inventory',
+        canActivate: [authGuard],
+        children: [
+          {
+            path: '', loadComponent: () => import('./inventory/inventario.component')
+          },
+          {
+            path: 'add-product', loadComponent: () => import('./inventory/pages/add-product/add-product.component'),
+          }
+        ]
       },
       {
         //path principal de los movimientos
         path: 'movimientos', loadComponent: () => import('./movimientos/movimientos.component'),
       },
+      //path principal de las ventas
       {
         path: 'sales', loadComponent: () => import('./sales/sales.component'),
       },

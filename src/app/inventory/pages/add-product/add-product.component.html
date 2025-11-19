@@ -1,3 +1,191 @@
-<p>
-  add-product works!
-</p>
+<section class="h-full flex flex-col min-h-0 pb-24">
+  <!-- HEADER SUPERIOR -->
+  <div class="flex items-center gap-3 mb-4">
+    <button mat-icon-button class="border border-slate-200 rounded-full" (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="flex-1">
+      <h1 class="text-xl md:text-2xl font-semibold text-slate-800">
+        Producto básico
+      </h1>
+    </div>
+  </div>
+
+  <!-- TABS SUPERIORES -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <button class="px-4 py-2 rounded-full text-sm font-medium bg-slate-900 text-white">
+      Producto básico
+    </button>
+
+    <button class="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-500 cursor-not-allowed" disabled>
+      Producto con variantes
+    </button>
+
+    <button class="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-500 cursor-not-allowed" disabled>
+      Producto con medidas
+    </button>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <form [formGroup]="productForm"
+    class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] gap-6 flex-1 min-h-0">
+
+    <!-- COLUMNA IZQUIERDA: DATOS DEL PRODUCTO -->
+    <div class="flex flex-col gap-4">
+      <!-- Card imágenes + campos básicos -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <h2 class="text-sm font-semibold text-slate-700 mb-4">
+          Datos del producto
+        </h2>
+
+        <!-- Dropzone imágenes -->
+        <div
+          class="border border-dashed border-slate-300 rounded-xl p-6 mb-5 flex flex-col items-center justify-center text-center bg-slate-50">
+          <mat-icon class="text-slate-400 mb-2 text-4xl">file_upload</mat-icon>
+          <p class="text-sm text-slate-700 font-medium mb-1">
+            Carga hasta 3 imágenes
+          </p>
+          <p class="text-xs text-slate-500 mb-3">
+            Recomendamos: 500 x 500 px, formato PNG/JPG y peso máximo 2 MB.
+          </p>
+
+          <button mat-stroked-button type="button" class="rounded-full px-4" (click)="fileInput.click()">
+            Seleccionar imágenes
+          </button>
+          <input #fileInput type="file" class="hidden" (change)="onFilesSelected($event)" accept="image/*" multiple />
+
+          <!-- preview miniaturas -->
+          <div *ngIf="images.length > 0" class="mt-4 flex flex-wrap gap-3 justify-center">
+            <div *ngFor="let img of images; let i = index"
+              class="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+              <img [src]="img" alt="preview" class="w-full h-full object-cover" *ngIf="false" />
+              <!-- por ahora solo un placeholder visual -->
+              <div class="w-full h-full flex items-center justify-center text-xs text-slate-500">
+                Img {{ i + 1 }}
+              </div>
+              <button type="button" mat-mini-fab class="!bg-white !text-slate-700 shadow-md absolute -top-2 -right-2"
+                (click)="removeImage(i)">
+                <mat-icon class="text-base">close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos básicos -->
+        <div class="grid grid-cols-1 gap-4">
+          <!-- Código -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Código</mat-label>
+            <input matInput formControlName="code" placeholder="Escanea o escribe el código del producto" />
+            <button mat-icon-button matSuffix tabindex="-1">
+              <mat-icon>qr_code_scanner</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <!-- Nombre -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nombre del producto</mat-label>
+            <input matInput formControlName="name" placeholder="Camiseta, perfume, aretes..." />
+            <mat-error *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched">
+              El nombre del producto es obligatorio.
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Cantidad disponible -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Cantidad disponible</mat-label>
+            <input matInput type="number" min="0" formControlName="stock" />
+          </mat-form-field>
+
+          <!-- Precio de venta -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Precio de venta</mat-label>
+            <span matPrefix>Q&nbsp;</span>
+            <input matInput type="number" min="0" step="0.01" formControlName="salePrice" />
+            <mat-error *ngIf="productForm.get('salePrice')?.invalid && productForm.get('salePrice')?.touched">
+              El precio de venta es obligatorio.
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Costo de compra -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Costo de compra</mat-label>
+            <span matPrefix>Q&nbsp;</span>
+            <input matInput type="number" min="0" step="0.01" formControlName="costPrice" />
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: INFORMACIÓN ADICIONAL -->
+    <div class="flex flex-col gap-4">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <h2 class="text-sm font-semibold text-slate-700 mb-4">
+          Información adicional
+        </h2>
+
+        <div class="space-y-4">
+          <!-- Categoría -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Categoría</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let c of categories" [value]="c">
+                {{ c }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="productForm.get('category')?.invalid && productForm.get('category')?.touched">
+              La categoría es obligatoria.
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Mostrar en tienda virtual -->
+          <div class="border border-emerald-400 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+            <div>
+              <div class="text-sm font-semibold text-emerald-700">
+                Mostrar producto en tienda virtual
+              </div>
+              <div class="text-xs text-slate-500">
+                Este producto será visible para tus clientes si compartes tu catálogo.
+              </div>
+            </div>
+            <mat-slide-toggle color="primary" formControlName="showOnline"></mat-slide-toggle>
+          </div>
+
+          <!-- Descripción -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput rows="4" formControlName="description"
+              placeholder="Añadir una descripción ayudará a tus clientes a elegir más fácil">
+            </textarea>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+    <!-- BOTÓN MÓVIL: full width, al final del contenido -->
+    <div class="mt-6 md:hidden">
+      <button mat-flat-button color="primary" class="w-full rounded-full py-3 text-base font-semibold"
+        [disabled]="isInvalid" (click)="onSubmit()">
+        Crear producto
+      </button>
+    </div>
+  </form>
+
+  <!-- BOTÓN DESKTOP: flotante en esquina inferior derecha -->
+<!-- BOTÓN ESCRITORIO -->
+<div class="hidden md:block">
+  <button
+    mat-flat-button
+    color="primary"
+    class="!fixed !bottom-4 !right-4 md:!bottom-6 md:!right-6 !z-50
+           rounded-full shadow-xl px-6 py-3 flex items-center gap-3
+           text-white text-base font-semibold"
+    [disabled]="isInvalid"
+    (click)="onSubmit()">
+    <mat-icon class="!text-2xl">check</mat-icon>
+    <span>Crear producto</span>
+  </button>
+</div>
+
+
+
+</section>
