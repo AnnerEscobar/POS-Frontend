@@ -10,8 +10,14 @@ import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { Router } from '@angular/router';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
-import { InventoryService, Product as BackendProduct } from './services/inventory.service';
+
+import {
+  InventoryService,
+  Product as BackendProduct,
+  StockStatus,
+} from './services/inventory.service';
 
 type Product = {
   id: string;
@@ -23,7 +29,7 @@ type Product = {
   category?: string | null;
 };
 
-type StockFilter = 'all' | 'low' | 'out';
+type StockFilter = StockStatus; // 'all' | 'low' | 'out'
 
 @Component({
   standalone: true,
@@ -43,15 +49,15 @@ type StockFilter = 'all' | 'low' | 'out';
     MatIconModule,
     MatTableModule,
     MatSidenavModule,
-  ]
+    MatPaginatorModule,
+  ],
 })
 export default class InventarioComponent implements OnInit {
-
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private inventory = inject(InventoryService);
+  private inventory: InventoryService = inject(InventoryService);
 
-  // Data proveniente del backend
+  // Datos que vienen del backend (ya filtrados por categoría/stock)
   data = signal<Product[]>([]);
 
   // filtros / estado UI
@@ -60,66 +66,104 @@ export default class InventarioComponent implements OnInit {
   selectedStockFilter = signal<StockFilter>('all');
   drawerOpened = false;
 
-  // métricas de stock
+  // métricas de stock (sobre el dataset cargado actualmente)
   lowStockCount = computed(() =>
-    this.data().filter(p => p.stock === 1 || p.stock === 2).length
+    this.data().filter((p) => p.stock === 1 || p.stock === 2).length
   );
 
   outOfStockCount = computed(() =>
-    this.data().filter(p => p.stock === 0).length
+    this.data().filter((p) => p.stock === 0).length
   );
 
   categories = computed(() => {
-    const set = new Set(this.data().map(p => p.category).filter(Boolean) as string[]);
+    const set = new Set(
+      this.data()
+        .map((p) => p.category)
+        .filter(Boolean) as string[]
+    );
     return Array.from(set);
   });
 
-  filtered = computed(() => {
-    const q = (this.form.value.search || '').toString().toLowerCase().trim();
-    const cat = this.selectedCategory();
-    const f = this.selectedStockFilter();
-
-    return this.data().filter(p => {
-      const byText = !q || p.name.toLowerCase().includes(q);
-      const byCat = !cat || p.category === cat;
-      const byStock =
-        f === 'all'
-          ? true
-          : f === 'low'
-            ? (p.stock === 1 || p.stock === 2)
-            : (p.stock === 0); // 'out'
-      return byText && byCat && byStock;
-    });
-  });
+  // AHORA filtered() solo aplica búsqueda de texto sobre los datos ya filtrados por backend
+  filtered = computed(() => this.data());
 
   cols = ['product', 'price', 'cost', 'stock', 'profit'];
 
+   // 🔹 Paginación con MatPaginator
+  pageIndex = signal(0);     // índice de página (0 = primera)
+  pageSize = signal(5);     // cuantos productos por página
+
+  paged = computed(() => {
+    const data = this.filtered();
+    const start = this.pageIndex() * this.pageSize();
+    const end = start + this.pageSize();
+    return data.slice(start, end);
+  });
+
+  // opcional: para mostrar rango "Mostrando X - Y de Z"
+  pageStart = computed(() => {
+    const total = this.filtered().length;
+    if (total === 0) return 0;
+    return this.pageIndex() * this.pageSize() + 1;
+  });
+
+  pageEnd = computed(() => {
+    const total = this.filtered().length;
+    const end = (this.pageIndex() + 1) * this.pageSize();
+    return end > total ? total : end;
+  });
+
+  onPageChange(event: PageEvent) {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+    // cuantos productos por página
+
   totalCost = computed(() =>
-    this.data().reduce((a, c) => a + (c.cost * c.stock), 0)
+    this.data().reduce((a, c) => a + c.cost * c.stock, 0)
   );
 
   // acciones
-  openCategories() { this.drawerOpened = true; }
-  createProduct() { this.router.navigate(['/home/inventory/add-product']); }
+  openCategories() {
+    this.drawerOpened = true;
+  }
 
-  selectCategory(c: string | null) { this.selectedCategory.set(c); }
-  applySearch() { /* más adelante: buscar en API si quieres */ }
+  createProduct() {
+    this.router.navigate(['/home/inventory/add-product']);
+  }
+
+  selectCategory(c: string | null) {
+    this.selectedCategory.set(c);
+    this.pageIndex.set(0);
+    this.loadProducts(); // recargar desde backend con la nueva categoría
+  }
+
+  applySearch() {
+    const q = (this.form.value.search || '').toString();
+    this.pageIndex.set(0);
+    this.loadProducts(q);
+  }
 
   selectStockFilter(f: StockFilter) {
     if (this.selectedStockFilter() === f) {
+      // si clickea de nuevo, volvemos a 'all'
       this.selectedStockFilter.set('all');
     } else {
       this.selectedStockFilter.set(f);
     }
+    this.pageIndex.set(0);
+    this.loadProducts(); // recargar desde backend con nuevo stockStatus
   }
 
   clearAllFilters() {
     this.selectedCategory.set(null);
     this.selectedStockFilter.set('all');
     this.form.patchValue({ search: '' });
+    this.pageIndex.set(0);
+    this.loadProducts();
   }
 
-  // ediciones inline (por ahora solo front, luego las mandamos al backend)
+  // ediciones inline (por ahora sólo en UI; luego las mandaremos al backend)
   setPrice(p: Product, v: number) {
     p.price = Number(v) || 0;
     this.data.set([...this.data()]);
@@ -136,8 +180,9 @@ export default class InventarioComponent implements OnInit {
   }
 
   // ganancias
-  profitAmount = (p: Product) => (p.price - p.cost);
-  profitPercent = (p: Product) => p.price ? ((p.price - p.cost) / p.price) * 100 : 0;
+  profitAmount = (p: Product) => p.price - p.cost;
+  profitPercent = (p: Product) =>
+    p.price ? ((p.price - p.cost) / p.price) * 100 : 0;
 
   constructor() { }
 
@@ -145,27 +190,40 @@ export default class InventarioComponent implements OnInit {
     this.loadProducts();
   }
 
-  private loadProducts() {
-    this.inventory.getProducts().subscribe({
-      next: (res) => {
-        const products: BackendProduct[] = res.items || [];
+  private loadProducts(search?: string) {
+    const category = this.selectedCategory();
+    const stockStatus = this.selectedStockFilter();
+    const q = (search ?? this.form.value.search ?? '').toString();
 
-        const mapped: Product[] = products.map(p => ({
-          id: p._id,
-          name: p.name,
-          price: p.price,
-          cost: p.cost,
-          stock: p.stock,
-          image: p.image,
-          category: p.category,
-        }));
+    this.inventory
+      .getProducts({
+        category: category,
+        stockStatus: stockStatus,
+        search: q,
+        page: 1,
+        limit: 1000, // por ahora un límite alto
+      })
+      .subscribe({
+        next: (res: { items: BackendProduct[]; total: number; page: number; limit: number }) => {
+          const products: BackendProduct[] = res.items || [];
 
-        this.data.set(mapped);
-      },
-      error: (err) => {
-        console.error('Error cargando productos:', err);
-      },
-    });
+          const mapped: Product[] = products.map((p) => ({
+            id: p._id,
+            name: p.name,
+            price: p.price,
+            cost: p.cost,
+            stock: p.stock,
+            image: p.image,
+            category: p.category,
+          }));
+
+          this.data.set(mapped);
+        },
+        error: (err) => {
+          console.error('Error cargando productos:', err);
+        },
+      });
   }
+
 
 }

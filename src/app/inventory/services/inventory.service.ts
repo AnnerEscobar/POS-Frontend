@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateProductDto } from '../interfaces/create-product-dto.interface';
 
@@ -21,9 +21,14 @@ export interface Product {
   updatedAt: string;
 }
 
+// 🔹 DEFINE y EXPORTA el tipo aquí
+export type StockStatus = 'all' | 'low' | 'out';
+
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
+
   private http = inject(HttpClient);
+
 
   // Ajusta según tu backend:
   // - Si NO usas prefix 'api' -> 'http://localhost:3000'
@@ -36,14 +41,43 @@ export class InventoryService {
 
   // Más adelante aquí agregaremos getProducts(), updateProduct(), etc.
 
-  getProducts() {
-    return this.http.get<{
-      items: Product[];
-      total: number;
-      page: number;
-      limit: number;
-    }>(`${this.api}/product`);
+getProducts(options?: {
+  category?: string | null;
+  stockStatus?: StockStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
+  let params = new HttpParams();
+
+  if (options?.category) {
+    params = params.set('category', options.category);
   }
+
+  if (options?.stockStatus && options.stockStatus !== 'all') {
+    params = params.set('stockStatus', options.stockStatus);
+  }
+
+  if (options?.search && options.search.trim() !== '') {
+    params = params.set('search', options.search.trim());
+  }
+
+  if (options?.page) {
+    params = params.set('page', options.page.toString());
+  }
+
+  if (options?.limit) {
+    params = params.set('limit', options.limit.toString());
+  }
+
+  return this.http.get<{
+    items: Product[];
+    total: number;
+    page: number;
+    limit: number;
+  }>(`${this.api}/product`, { params });
+}
+
 
 
 }

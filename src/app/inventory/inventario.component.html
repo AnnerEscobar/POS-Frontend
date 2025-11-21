@@ -134,7 +134,7 @@
 
       <table *ngIf="filtered().length > 0"
              mat-table
-             [dataSource]="filtered()"
+             [dataSource]="paged()"
              class="w-full min-w-[700px]">
 
         <!-- Col: Producto -->
@@ -223,6 +223,30 @@
         <tr mat-header-row *matHeaderRowDef="cols"></tr>
         <tr mat-row *matRowDef="let row; columns: cols;" class="hover:bg-slate-50"></tr>
       </table>
+            <!-- PAGINADOR -->
+      <div *ngIf="filtered().length > 0" class="px-4 pb-4 pt-2">
+        <div class="flex items-center justify-between text-xs md:text-sm text-slate-600 mb-2">
+          <div>
+            Mostrando
+            <span class="font-semibold">{{ pageStart() }}</span>
+            –
+            <span class="font-semibold">{{ pageEnd() }}</span>
+            de
+            <span class="font-semibold">{{ filtered().length }}</span>
+            productos
+          </div>
+        </div>
+
+        <mat-paginator
+          [length]="filtered().length"
+          [pageIndex]="pageIndex()"
+          [pageSize]="pageSize()"
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+
     </div>
   </div>
 
