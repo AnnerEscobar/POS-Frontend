@@ -10,7 +10,10 @@ import { MatListModule } from '@angular/material/list';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Router } from '@angular/router';
-import { CreateProductDto } from '../../interfaces/add-product.interface';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CreateProductDto } from '../../interfaces/create-product-dto.interface';
+import { InventoryService } from '../../services/inventory.service';
+
 
 @Component({
   selector: 'app-add-product',
@@ -28,15 +31,25 @@ import { CreateProductDto } from '../../interfaces/add-product.interface';
     MatButtonModule,
     MatInputModule,
     MatSlideToggleModule,
+    MatSnackBarModule,
   ]
 })
 
 
-export default class AddProductComponent  {
+export default class AddProductComponent {
 
-   private fb = inject(FormBuilder);
+  // Inyección de dependencias
+  private fb = inject(FormBuilder);
   private router = inject(Router);
+  private inventory = inject(InventoryService);
+  private snackBar = inject(MatSnackBar);
 
+  // Estado
+  isSubmitting = false;
+  categories: string[] = ['Papelería', 'Informática', 'Bocinas', 'Accesorios'];
+  images: File[] = [];
+
+  // Formulario reactivo
   productForm: FormGroup = this.fb.group({
     code: [null],
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -48,10 +61,6 @@ export default class AddProductComponent  {
     showOnline: [true],
   });
 
-  categories: string[] = ['Papelería', 'Informática', 'Bocinas', 'Accesorios'];
-
-  images: File[] = [];
-
   get isInvalid() {
     return this.productForm.invalid;
   }
@@ -61,20 +70,47 @@ export default class AddProductComponent  {
   }
 
   onSubmit() {
-    if (this.productForm.invalid) {
+    if (this.productForm.invalid || this.isSubmitting) {
       this.productForm.markAllAsTouched();
       return;
     }
 
+    const formValue = this.productForm.value;
+
     const dto: CreateProductDto = {
-      ...this.productForm.value,
+      code: formValue.code ?? null,
+      name: formValue.name!,
+      stock: Number(formValue.stock ?? 0),
+      salePrice: Number(formValue.salePrice ?? 0),
+      costPrice: Number(formValue.costPrice ?? 0),
+      category: formValue.category ?? null,
+      description: formValue.description ?? null,
+      showOnline: !!formValue.showOnline,
       images: this.images,
     };
 
-    console.log('Crear producto DTO:', dto);
+    this.isSubmitting = true;
 
-    // luego aquí llamamos al backend
-    this.router.navigate(['/home/inventory']);
+    this.inventory.createProduct(dto).subscribe({
+      next: (product) => {
+        this.isSubmitting = false;
+
+        this.snackBar.open('Producto creado correctamente', 'Cerrar', {
+          duration: 2500,
+        });
+
+        // Redirigimos al inventario
+        this.router.navigate(['/home/inventory']);
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        console.error('Error al crear producto', error);
+
+        this.snackBar.open('Ocurrió un error al crear el producto', 'Cerrar', {
+          duration: 3500,
+        });
+      },
+    });
   }
 
   onFilesSelected(event: Event) {

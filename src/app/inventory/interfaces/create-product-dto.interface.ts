@@ -7,5 +7,6 @@ export interface CreateProductDto {
   category: string | null;
   description: string | null;
   showOnline: boolean;
-  images: File[]; // por ahora solo en memoria
+  // por ahora solo mandaremos datos, no archivos
+  images?: File[]; // más adelante si guardas URLs
 }
