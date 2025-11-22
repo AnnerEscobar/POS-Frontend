@@ -76,11 +76,14 @@
           <!-- Código -->
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Código</mat-label>
-            <input matInput formControlName="code" placeholder="Escanea o escribe el código del producto" />
-            <button mat-icon-button matSuffix tabindex="-1">
+            <input matInput formControlName="code" #codeInput placeholder="Escanea o escribe el código del producto">
+
+            <button mat-icon-button matSuffix type="button" (click)="onScanCodeClick(codeInput)"
+              aria-label="Escanear código">
               <mat-icon>qr_code_scanner</mat-icon>
             </button>
           </mat-form-field>
+
 
           <!-- Nombre -->
           <mat-form-field appearance="outline" class="w-full">
@@ -126,39 +129,55 @@
 
         <div class="space-y-4">
           <!-- Categoría -->
-          <mat-form-field appearance="outline" class="w-full">
+          <!-- Selección de categoría existente -->
+          <mat-form-field appearance="outline" class="w-100">
             <mat-label>Categoría</mat-label>
+
             <mat-select formControlName="category">
-              <mat-option *ngFor="let c of categories" [value]="c">
-                {{ c }}
+              <mat-option value="" disabled>Selecciona una categoría</mat-option>
+
+              <mat-option *ngFor="let cat of categories" [value]="cat.name">
+                {{ cat.name }}
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="productForm.get('category')?.invalid && productForm.get('category')?.touched">
-              La categoría es obligatoria.
-            </mat-error>
           </mat-form-field>
 
-          <!-- Mostrar en tienda virtual -->
-          <div class="border border-emerald-400 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
-            <div>
-              <div class="text-sm font-semibold text-emerald-700">
-                Mostrar producto en tienda virtual
-              </div>
-              <div class="text-xs text-slate-500">
-                Este producto será visible para tus clientes si compartes tu catálogo.
-              </div>
-            </div>
-            <mat-slide-toggle color="primary" formControlName="showOnline"></mat-slide-toggle>
+          <!-- Crear nueva categoría en el momento -->
+          <div class="d-flex gap-2 mt-2">
+            <mat-form-field appearance="outline" class="flex-grow-1">
+              <mat-label>Nueva categoría</mat-label>
+              <input matInput type="text" [formControl]="newCategoryControl" />
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" (click)="addNewCategory()">
+              Agregar
+            </button>
           </div>
 
-          <!-- Descripción -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Descripción</mat-label>
-            <textarea matInput rows="4" formControlName="description"
-              placeholder="Añadir una descripción ayudará a tus clientes a elegir más fácil">
-            </textarea>
-          </mat-form-field>
+
         </div>
+
+
+        <!-- Mostrar en tienda virtual -->
+        <div class="border border-emerald-400 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+          <div>
+            <div class="text-sm font-semibold text-emerald-700">
+              Mostrar producto en tienda virtual
+            </div>
+            <div class="text-xs text-slate-500">
+              Este producto será visible para tus clientes si compartes tu catálogo.
+            </div>
+          </div>
+          <mat-slide-toggle color="primary" formControlName="showOnline"></mat-slide-toggle>
+        </div>
+
+        <!-- Descripción -->
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Descripción</mat-label>
+          <textarea matInput rows="4" formControlName="description"
+            placeholder="Añadir una descripción ayudará a tus clientes a elegir más fácil">
+            </textarea>
+        </mat-form-field>
       </div>
     </div>
     <!-- BOTÓN MÓVIL: full width, al final del contenido -->
@@ -180,7 +199,22 @@
       <span>Crear producto</span>
     </button>
   </div>
-
-
-
 </section>
+
+<!-- OVERLAY DE ESCANEO (solo móvil) -->
+<div *ngIf="scanning" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-xl p-4 w-full max-w-sm flex flex-col gap-3">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-semibold text-slate-800">Escanear código</h2>
+      <button mat-icon-button (click)="stopCameraScan()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <video #video class="w-full rounded-lg bg-black aspect-[4/3]" autoplay muted playsinline></video>
+
+    <p class="text-xs text-slate-500 mt-1">
+      Apunta la cámara hacia el código de barras o QR.
+    </p>
+  </div>
+</div>

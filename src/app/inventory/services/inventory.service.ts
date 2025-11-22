@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateProductDto } from '../interfaces/create-product-dto.interface';
+import { environment } from '../../../environments/environments';
 
 // Si tienes environments, usa environment.apiUrl
 // import { environment } from '../../environments/environment';
@@ -33,7 +34,7 @@ export class InventoryService {
   // Ajusta según tu backend:
   // - Si NO usas prefix 'api' -> 'http://localhost:3000'
   // - Si usas app.setGlobalPrefix('api') -> 'http://localhost:3000/api'
-  private api = 'http://localhost:3000';
+  private api = environment.apiUrl;
 
   createProduct(dto: CreateProductDto): Observable<Product> {
     return this.http.post<Product>(`${this.api}/product`, dto);

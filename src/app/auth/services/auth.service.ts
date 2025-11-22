@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AuthStateService, LoginResponse } from './auth-state.service';
+import { environment } from '../../../environments/environments';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -11,7 +12,7 @@ export class AuthService {
   private router = inject(Router);
   private state = inject(AuthStateService);
 
-  private api = 'http://localhost:3000'; // o usa environment
+  private api = environment.apiUrl; // o usa environment
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http
