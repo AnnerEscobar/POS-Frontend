@@ -1,3 +1,4 @@
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Component, inject, OnInit, computed, signal } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -11,6 +12,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { Router } from '@angular/router';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { CategoryService } from './services/category.service';
+import { CreateCategoryDialogComponent } from './modals/create-category-dialog.component'; // ajusta ruta
+import * as XLSX from 'xlsx';
 
 
 import {
@@ -18,6 +23,7 @@ import {
   Product as BackendProduct,
   StockStatus,
 } from './services/inventory.service';
+import { ConfirmUpdateProductDialogComponent } from './modals/confirm-update-product-dialog.component';
 
 type Product = {
   id: string;
@@ -27,6 +33,19 @@ type Product = {
   stock: number;
   image?: string | null;
   category?: string | null;
+};
+
+export interface ProductRow extends Product {
+  tempPrice: number;
+  tempCost: number;
+  tempStock: number;
+  hasChanges: boolean;
+}
+
+type Category = {
+  _id: string;
+  name: string;
+  isActive?: boolean;
 };
 
 type StockFilter = StockStatus; // 'all' | 'low' | 'out'
@@ -50,23 +69,28 @@ type StockFilter = StockStatus; // 'all' | 'low' | 'out'
     MatTableModule,
     MatSidenavModule,
     MatPaginatorModule,
+    MatDialogModule,
   ],
 })
 export default class InventarioComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private inventory: InventoryService = inject(InventoryService);
+  private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
+  private categoryService = inject(CategoryService);
 
-  // Datos que vienen del backend (ya filtrados por categoría/stock)
-  data = signal<Product[]>([]);
+  // Ahora trabajamos directamente con ProductRow
+  data = signal<ProductRow[]>([]);
 
   // filtros / estado UI
   form = this.fb.group({ search: [''] });
   selectedCategory = signal<string | null>(null);
   selectedStockFilter = signal<StockFilter>('all');
   drawerOpened = false;
+  categoryList = signal<Category[]>([]);
 
-  // métricas de stock (sobre el dataset cargado actualmente)
+  // métricas de stock
   lowStockCount = computed(() =>
     this.data().filter((p) => p.stock === 1 || p.stock === 2).length
   );
@@ -75,23 +99,16 @@ export default class InventarioComponent implements OnInit {
     this.data().filter((p) => p.stock === 0).length
   );
 
-  categories = computed(() => {
-    const set = new Set(
-      this.data()
-        .map((p) => p.category)
-        .filter(Boolean) as string[]
-    );
-    return Array.from(set);
-  });
+  categories = computed(() => this.categoryList());
 
-  // AHORA filtered() solo aplica búsqueda de texto sobre los datos ya filtrados por backend
   filtered = computed(() => this.data());
 
-  cols = ['product', 'price', 'cost', 'stock', 'profit'];
+  // agregamos columna de acciones
+  cols = ['product', 'price', 'cost', 'stock', 'profit', 'actions'];
 
-   // 🔹 Paginación con MatPaginator
-  pageIndex = signal(0);     // índice de página (0 = primera)
-  pageSize = signal(5);     // cuantos productos por página
+  // Paginación
+  pageIndex = signal(0);
+  pageSize = signal(5);
 
   paged = computed(() => {
     const data = this.filtered();
@@ -100,7 +117,6 @@ export default class InventarioComponent implements OnInit {
     return data.slice(start, end);
   });
 
-  // opcional: para mostrar rango "Mostrando X - Y de Z"
   pageStart = computed(() => {
     const total = this.filtered().length;
     if (total === 0) return 0;
@@ -117,7 +133,6 @@ export default class InventarioComponent implements OnInit {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
   }
-    // cuantos productos por página
 
   totalCost = computed(() =>
     this.data().reduce((a, c) => a + c.cost * c.stock, 0)
@@ -127,6 +142,12 @@ export default class InventarioComponent implements OnInit {
   openCategories() {
     this.drawerOpened = true;
   }
+
+  onCategoryClick(cat: Category) {
+    this.selectCategory(cat.name);
+    this.drawerOpened = false;
+  }
+
 
   createProduct() {
     this.router.navigate(['/home/inventory/add-product']);
@@ -146,13 +167,12 @@ export default class InventarioComponent implements OnInit {
 
   selectStockFilter(f: StockFilter) {
     if (this.selectedStockFilter() === f) {
-      // si clickea de nuevo, volvemos a 'all'
       this.selectedStockFilter.set('all');
     } else {
       this.selectedStockFilter.set(f);
     }
     this.pageIndex.set(0);
-    this.loadProducts(); // recargar desde backend con nuevo stockStatus
+    this.loadProducts();
   }
 
   clearAllFilters() {
@@ -163,31 +183,66 @@ export default class InventarioComponent implements OnInit {
     this.loadProducts();
   }
 
-  // ediciones inline (por ahora sólo en UI; luego las mandaremos al backend)
-  setPrice(p: Product, v: number) {
-    p.price = Number(v) || 0;
-    this.data.set([...this.data()]);
+    downloadExcel() {
+    // Usamos los productos filtrados actuales
+    const data = this.filtered(); // ProductRow[]
+
+    if (!data.length) {
+      this.snackBar.open('No hay productos para exportar', 'Cerrar', {
+        duration: 2000,
+      });
+      return;
+    }
+
+    // Armamos las filas que irán al Excel
+    const rows = data.map(p => ({
+      'Producto': p.name,
+      'Categoría': p.category ?? '',
+      'Precio': p.price,
+      'Costo': p.cost,
+      'Stock': p.stock,
+      'Ganancia Q': this.profitAmount(p),
+      'Ganancia %': this.profitPercent(p),
+    }));
+
+    // 1) Convertimos JSON -> hoja de Excel
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    // 2) Creamos el libro
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
+
+    // 3) Descargamos el archivo
+    XLSX.writeFile(workbook, 'inventario.xlsx');
   }
 
-  setCost(p: Product, v: number) {
-    p.cost = Number(v) || 0;
-    this.data.set([...this.data()]);
+
+  // ediciones inline: actualizamos los campos temporales
+  setPrice(row: ProductRow, v: string) {
+    row.tempPrice = Number(v) || 0;
+    this.onFieldChange(row);
   }
 
-  setStock(p: Product, v: number) {
-    p.stock = Number(v) || 0;
-    this.data.set([...this.data()]);
+  setCost(row: ProductRow, v: string) {
+    row.tempCost = Number(v) || 0;
+    this.onFieldChange(row);
+  }
+
+  setStock(row: ProductRow, v: string) {
+    row.tempStock = Number(v) || 0;
+    this.onFieldChange(row);
   }
 
   // ganancias
-  profitAmount = (p: Product) => p.price - p.cost;
-  profitPercent = (p: Product) =>
+  profitAmount = (p: ProductRow) => p.price - p.cost;
+  profitPercent = (p: ProductRow) =>
     p.price ? ((p.price - p.cost) / p.price) * 100 : 0;
 
   constructor() { }
 
   ngOnInit() {
     this.loadProducts();
+    this.loadCategories();
   }
 
   private loadProducts(search?: string) {
@@ -201,13 +256,13 @@ export default class InventarioComponent implements OnInit {
         stockStatus: stockStatus,
         search: q,
         page: 1,
-        limit: 1000, // por ahora un límite alto
+        limit: 1000,
       })
       .subscribe({
         next: (res: { items: BackendProduct[]; total: number; page: number; limit: number }) => {
           const products: BackendProduct[] = res.items || [];
 
-          const mapped: Product[] = products.map((p) => ({
+          const mapped: ProductRow[] = products.map((p) => ({
             id: p._id,
             name: p.name,
             price: p.price,
@@ -215,6 +270,10 @@ export default class InventarioComponent implements OnInit {
             stock: p.stock,
             image: p.image,
             category: p.category,
+            tempPrice: p.price,
+            tempCost: p.cost,
+            tempStock: p.stock,
+            hasChanges: false,
           }));
 
           this.data.set(mapped);
@@ -223,6 +282,103 @@ export default class InventarioComponent implements OnInit {
           console.error('Error cargando productos:', err);
         },
       });
+  }
+
+  onFieldChange(row: ProductRow) {
+    row.hasChanges =
+      row.tempPrice !== row.price ||
+      row.tempCost !== row.cost ||
+      row.tempStock !== row.stock;
+  }
+
+  openConfirmDialog(row: ProductRow) {
+    const dialogRef = this.dialog.open(ConfirmUpdateProductDialogComponent, {
+      width: '380px',
+      data: {
+        name: row.name,
+        newPrice: row.tempPrice,
+        newCost: row.tempCost,
+        newStock: row.tempStock,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'confirm') {
+        this.saveRowChanges(row);
+      }
+    });
+  }
+
+  saveRowChanges(row: ProductRow) {
+    const payload: any = {};
+
+    if (row.tempPrice !== row.price) payload.price = row.tempPrice;
+    if (row.tempCost !== row.cost) payload.cost = row.tempCost;
+    if (row.tempStock !== row.stock) payload.stock = row.tempStock;
+
+    if (Object.keys(payload).length === 0) return;
+
+    this.inventory.updateProduct(row.id, payload).subscribe({
+      next: (updated) => {
+        // sincronizar valores reales con los temporales
+        row.price = updated.price;
+        row.cost = updated.cost;
+        row.stock = updated.stock;
+
+        row.tempPrice = updated.price;
+        row.tempCost = updated.cost;
+        row.tempStock = updated.stock;
+        row.hasChanges = false;
+
+        this.snackBar.open('Producto actualizado', 'Cerrar', {
+          duration: 2000,
+        });
+      },
+      error: (err) => {
+        console.error(err);
+        this.snackBar.open('Error al actualizar el producto', 'Cerrar', {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
+  private loadCategories() {
+    this.categoryService.getCategories().subscribe({
+      next: (cats) => {
+        // cats ya es un array de { _id, name, ... }
+        this.categoryList.set(cats as Category[]);
+      },
+      error: (err) => {
+        console.error('Error cargando categorías', err);
+      },
+    });
+  }
+
+  openCreateCategoryDialog() {
+    const dialogRef = this.dialog.open(CreateCategoryDialogComponent, {
+      width: '380px',
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result?.name) return;
+
+      this.categoryService.createCategory(result.name).subscribe({
+        next: (created: any) => {
+          // añadirla al listado local
+          this.categoryList.update((list) => [...list, created]);
+          this.snackBar.open('Categoría creada', 'Cerrar', {
+            duration: 2000,
+          });
+        },
+        error: (err) => {
+          console.error('Error creando categoría', err);
+          this.snackBar.open('No se pudo crear la categoría', 'Cerrar', {
+            duration: 3000,
+          });
+        },
+      });
+    });
   }
 
 

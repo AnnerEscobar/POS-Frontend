@@ -42,43 +42,46 @@ export class InventoryService {
 
   // Más adelante aquí agregaremos getProducts(), updateProduct(), etc.
 
-getProducts(options?: {
-  category?: string | null;
-  stockStatus?: StockStatus;
-  search?: string;
-  page?: number;
-  limit?: number;
-}) {
-  let params = new HttpParams();
+  getProducts(options?: {
+    category?: string | null;
+    stockStatus?: StockStatus;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    let params = new HttpParams();
 
-  if (options?.category) {
-    params = params.set('category', options.category);
+    if (options?.category) {
+      params = params.set('category', options.category);
+    }
+
+    if (options?.stockStatus && options.stockStatus !== 'all') {
+      params = params.set('stockStatus', options.stockStatus);
+    }
+
+    if (options?.search && options.search.trim() !== '') {
+      params = params.set('search', options.search.trim());
+    }
+
+    if (options?.page) {
+      params = params.set('page', options.page.toString());
+    }
+
+    if (options?.limit) {
+      params = params.set('limit', options.limit.toString());
+    }
+
+    return this.http.get<{
+      items: Product[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`${this.api}/product`, { params });
   }
 
-  if (options?.stockStatus && options.stockStatus !== 'all') {
-    params = params.set('stockStatus', options.stockStatus);
+  updateProduct(id: string, dto: any) {
+    return this.http.patch<Product>(`${this.api}/product/${id}`, dto);
   }
-
-  if (options?.search && options.search.trim() !== '') {
-    params = params.set('search', options.search.trim());
-  }
-
-  if (options?.page) {
-    params = params.set('page', options.page.toString());
-  }
-
-  if (options?.limit) {
-    params = params.set('limit', options.limit.toString());
-  }
-
-  return this.http.get<{
-    items: Product[];
-    total: number;
-    page: number;
-    limit: number;
-  }>(`${this.api}/product`, { params });
-}
-
 
 
 }
