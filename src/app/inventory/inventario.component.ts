@@ -16,6 +16,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CategoryService } from './services/category.service';
 import { CreateCategoryDialogComponent } from './modals/create-category-dialog.component'; // ajusta ruta
 import * as XLSX from 'xlsx';
+import { ProductDetailsDialogComponent } from './modals/product-details-dialog.component';
 
 
 import {
@@ -33,6 +34,9 @@ type Product = {
   stock: number;
   image?: string | null;
   category?: string | null;
+  code?: string | null;
+  description?: string | null;
+  createdAt?: string;
 };
 
 export interface ProductRow extends Product {
@@ -183,7 +187,7 @@ export default class InventarioComponent implements OnInit {
     this.loadProducts();
   }
 
-    downloadExcel() {
+  downloadExcel() {
     // Usamos los productos filtrados actuales
     const data = this.filtered(); // ProductRow[]
 
@@ -270,6 +274,9 @@ export default class InventarioComponent implements OnInit {
             stock: p.stock,
             image: p.image,
             category: p.category,
+            code: p.code,
+            description: p.description,
+            createdAt: p.createdAt,
             tempPrice: p.price,
             tempCost: p.cost,
             tempStock: p.stock,
@@ -318,7 +325,7 @@ export default class InventarioComponent implements OnInit {
 
     if (Object.keys(payload).length === 0) return;
 
-    this.inventory.updateProduct(row.id, payload).subscribe({
+    this.inventory.quickUpdateProduct(row.id, payload).subscribe({
       next: (updated) => {
         // sincronizar valores reales con los temporales
         row.price = updated.price;
@@ -380,6 +387,37 @@ export default class InventarioComponent implements OnInit {
       });
     });
   }
+
+ openProductDetails(p: ProductRow) {
+  const dialogRef = this.dialog.open(ProductDetailsDialogComponent, {
+    width: '520px',
+    data: {
+      id: p.id,
+      name: p.name,
+      image: p.image,
+      code: p.code ?? null,
+      category: p.category ?? null,
+      description: p.description ?? null,
+      price: p.price,
+      cost: p.cost,
+      stock: p.stock,
+      createdAt: p.createdAt,
+    },
+  });
+
+  dialogRef.afterClosed().subscribe((updated) => {
+    if (!updated) return;
+
+    // actualizamos la fila en la tabla
+    p.name = updated.name;
+    p.category = updated.category;
+    p.description = updated.description;
+
+    // disparar reactividad del signal
+    this.data.set([...this.data()]);
+  });
+}
+
 
 
 }

@@ -135,7 +135,10 @@
           <td mat-cell *matCellDef="let p" class="px-6 py-4">
             <div class="flex items-center gap-3">
               <img [src]="p.image || ''" class="w-10 h-10 rounded-md bg-gray-100 object-cover" alt="" />
-              <a class="font-medium text-slate-800 underline">{{ p.name }}</a>
+              <a class="font-medium text-slate-800 underline cursor-pointer" (click)="openProductDetails(p)">
+                {{ p.name }}
+              </a>
+
             </div>
           </td>
         </ng-container>

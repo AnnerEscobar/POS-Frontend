@@ -79,8 +79,15 @@ export class InventoryService {
     }>(`${this.api}/product`, { params });
   }
 
+  // 🔹 UPDATE RÁPIDO (tabla: precio, costo, stock)
+  quickUpdateProduct(id: string, dto: any) {
+    return this.http.patch<Product>(`${this.api}/product/quick/${id}`, dto);
+  }
+
   updateProduct(id: string, dto: any) {
+    console.log('Updating product with DTO:', dto);
     return this.http.patch<Product>(`${this.api}/product/${id}`, dto);
+
   }
 
 
