@@ -1,0 +1,148 @@
+<div class="h-full flex flex-col">
+  <div class="flex items-center gap-3 mb-3">
+    <button mat-icon-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div>
+      <h1 class="text-xl font-semibold text-slate-900">Venta libre</h1>
+      <p class="text-xs text-slate-500">
+        Para servicios como impresiones, copias, recargas, etc.
+      </p>
+    </div>
+  </div>
+
+  <div class="flex-1 flex items-start justify-center px-2 md:px-4">
+    <mat-card class="w-full max-w-3xl rounded-2xl shadow-sm">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="p-4 md:p-6 space-y-5">
+
+        <!-- 🔹 Constructor de servicios -->
+        <div class="space-y-3">
+          <h2 class="text-sm font-semibold text-slate-800">
+            Servicios
+          </h2>
+
+          <!-- Fila para agregar servicio -->
+          <div [formGroup]="serviceForm"
+               class="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end">
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Tipo de servicio</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let opt of serviceOptions" [value]="opt.value">
+                  {{ opt.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Cantidad</mat-label>
+              <input matInput type="number" formControlName="quantity">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Precio unitario</mat-label>
+              <input matInput type="number" formControlName="unitPrice">
+            </mat-form-field>
+
+            <button
+              mat-stroked-button
+              type="button"
+              class="whitespace-nowrap"
+              (click)="addService()">
+              Agregar
+            </button>
+          </div>
+
+          <!-- Tabla de servicios agregados -->
+          <div *ngIf="serviceItems.length > 0" class="overflow-auto rounded-xl border border-slate-200">
+            <table class="min-w-full text-xs md:text-sm">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="text-left px-3 py-2">Servicio</th>
+                  <th class="text-right px-3 py-2">Cant.</th>
+                  <th class="text-right px-3 py-2">P. unitario</th>
+                  <th class="text-right px-3 py-2">Subtotal</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of serviceItems; let i = index" class="border-t">
+                  <td class="px-3 py-2">{{ item.type }}</td>
+                  <td class="px-3 py-2 text-right">{{ item.quantity }}</td>
+                  <td class="px-3 py-2 text-right">Q {{ item.unitPrice | number:'1.2-2' }}</td>
+                  <td class="px-3 py-2 text-right">Q {{ item.subtotal | number:'1.2-2' }}</td>
+                  <td class="px-3 py-2 text-right">
+                    <button mat-icon-button type="button" (click)="removeService(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p *ngIf="serviceItems.length === 0" class="text-xs text-slate-500">
+            Agrega uno o más servicios con su cantidad y precio unitario.
+          </p>
+        </div>
+
+        <!-- 🔹 Datos del cliente -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nombre del cliente</mat-label>
+            <input matInput formControlName="customerName" placeholder="Opcional">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>NIT</mat-label>
+            <input matInput formControlName="customerNit">
+          </mat-form-field>
+        </div>
+
+        <!-- 🔹 Pago -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Método de pago</mat-label>
+            <mat-select formControlName="method">
+              <mat-option value="efectivo">Efectivo</mat-option>
+              <mat-option value="tarjeta">Tarjeta</mat-option>
+              <mat-option value="transferencia">Transferencia</mat-option>
+              <mat-option value="mixto">Mixto</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Monto recibido</mat-label>
+              <input matInput type="number" formControlName="paid" (input)="updateChange()">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Cambio</mat-label>
+              <input matInput formControlName="change" readonly>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- 🔹 Total -->
+        <div
+          class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 flex items-center justify-between">
+          <span class="text-sm text-slate-600">Total a cobrar</span>
+          <span class="text-lg font-semibold text-slate-900">
+            Q {{ amount | number:'1.2-2' }}
+          </span>
+        </div>
+
+        <!-- 🔹 Botón -->
+        <button
+          mat-flat-button
+          color="primary"
+          class="w-full rounded-full h-11 mt-2"
+          type="submit"
+        >
+          Registrar venta libre
+        </button>
+      </form>
+    </mat-card>
+  </div>
+</div>

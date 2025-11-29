@@ -1,150 +1,183 @@
 <section class="h-full flex flex-col">
-    <!-- Header + acciones -->
-    <div class="flex items-center justify-between mb-3">
-      <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">Movimientos</h1>
-      <div class="flex gap-3">
-        <button mat-stroked-button color="primary" class="rounded-xl px-4">Abrir caja</button>
-        <button mat-stroked-button class="rounded-xl px-4">Descargar reporte</button>
-      </div>
+  <!-- Header + acciones -->
+  <div class="flex items-center justify-between mb-3">
+    <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">Movimientos</h1>
+    <div class="flex gap-3">
+      <button mat-stroked-button color="primary" class="rounded-xl px-4">Abrir caja</button>
+      <button mat-stroked-button class="rounded-xl px-4">Descargar reporte</button>
     </div>
+  </div>
 
-    <!-- Tabs principales -->
-    <mat-tab-group class="bg-white rounded-xl border border-gray-200" dynamicHeight>
-      <mat-tab label="Transacciones">
-        <div class="p-4 md:p-5 space-y-4">
+  <!-- Tabs principales -->
+  <mat-tab-group class="bg-white rounded-xl border border-gray-200" dynamicHeight>
+    <mat-tab label="Transacciones">
+      <div class="p-4 md:p-5 space-y-4">
 
-          <!-- Filtros -->
-          <div class="flex flex-wrap items-center gap-3">
-            <button mat-stroked-button [matMenuTriggerFor]="filterMenu" class="rounded-xl">
-              <mat-icon class="mr-2">tune</mat-icon> Filtrar
-            </button>
-            <mat-menu #filterMenu="matMenu">
-              <button mat-menu-item>Todos</button>
-              <button mat-menu-item>Solo ingresos</button>
-              <button mat-menu-item>Solo egresos</button>
-            </mat-menu>
+        <!-- Filtros -->
+        <div class="flex flex-wrap items-center gap-3">
+          <button mat-stroked-button [matMenuTriggerFor]="filterMenu" class="rounded-xl">
+            <mat-icon class="mr-2">tune</mat-icon> Filtrar
+          </button>
+          <mat-menu #filterMenu="matMenu">
+            <button mat-menu-item>Todos</button>
+            <button mat-menu-item>Solo ingresos</button>
+            <button mat-menu-item>Solo egresos</button>
+          </mat-menu>
 
-            <mat-form-field appearance="outline" class="w-36">
-              <mat-label>Periodo</mat-label>
-              <mat-select [formControl]="form.controls.period">
-                <mat-option value="day">Diario</mat-option>
-                <mat-option value="week">Semanal</mat-option>
-                <mat-option value="month">Mensual</mat-option>
-              </mat-select>
-            </mat-form-field>
+          <mat-form-field appearance="outline" class="w-36">
+            <mat-label>Periodo</mat-label>
+            <mat-select >
+              <mat-option value="day">Diario</mat-option>
+              <mat-option value="week">Semanal</mat-option>
+              <mat-option value="month">Mensual</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-            <mat-form-field appearance="outline" class="w-44">
-              <mat-label>Fecha</mat-label>
-              <input matInput [matDatepicker]="picker" [formControl]="form.controls.date">
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
+          <mat-form-field appearance="outline" class="w-44">
+            <mat-label>Fecha</mat-label>
+            <input matInput >
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
 
-            <mat-form-field appearance="outline" class="min-w-[220px] flex-1">
-              <mat-label>Buscar concepto…</mat-label>
-              <input matInput [formControl]="form.controls.search">
-              <mat-icon matSuffix>search</mat-icon>
-            </mat-form-field>
-          </div>
+          <mat-form-field appearance="outline" class="min-w-[220px] flex-1">
+            <mat-label>Buscar concepto…</mat-label>
+            <input matInput >
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
 
-          <!-- KPIs -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <mat-card class="rounded-2xl shadow-sm">
-              <div class="p-4">
-                <div class="flex items-center gap-2 text-gray-600">
-                  <mat-icon>trending_up</mat-icon> <span>Balance</span>
-                </div>
-                <div class="text-2xl font-semibold mt-1">Q {{ kpis.balance | number:'1.0-0' }}</div>
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <mat-card class="rounded-2xl shadow-sm">
+            <div class="p-4">
+              <div class="flex items-center gap-2 text-gray-600">
+                <mat-icon>trending_up</mat-icon> <span>Balance</span>
               </div>
-            </mat-card>
-
-            <mat-card class="rounded-2xl shadow-sm">
-              <div class="p-4">
-                <div class="flex items-center gap-2 text-emerald-600">
-                  <mat-icon>attach_money</mat-icon> <span>Ventas totales</span>
-                </div>
-                <div class="text-2xl font-semibold mt-1">Q {{ kpis.sales | number:'1.0-0' }}</div>
-              </div>
-            </mat-card>
-
-            <mat-card class="rounded-2xl shadow-sm">
-              <div class="p-4">
-                <div class="flex items-center gap-2 text-rose-600">
-                  <mat-icon>money_off</mat-icon> <span>Gastos totales</span>
-                </div>
-                <div class="text-2xl font-semibold mt-1">Q {{ kpis.expenses | number:'1.0-0' }}</div>
-              </div>
-            </mat-card>
-          </div>
-
-          <!-- Subtabs: Ingresos / Egresos -->
-          <mat-tab-group style="background-color: transparent;">
-            <mat-tab label="Ingresos">
-              <div class="py-6">
-                <ng-container *ngIf="incomes.length; else emptyState">
-                  <table mat-table [dataSource]="incomes" class="w-full mat-elevation-z0">
-                    <ng-container matColumnDef="date">
-                      <th mat-header-cell *matHeaderCellDef>Fecha</th>
-                      <td mat-cell *matCellDef="let r">{{ r.date | date:'shortDate' }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="concept">
-                      <th mat-header-cell *matHeaderCellDef>Concepto</th>
-                      <td mat-cell *matCellDef="let r">{{ r.concept }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="amount">
-                      <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
-                      <td mat-cell *matCellDef="let r" class="text-right">Q {{ r.amount | number:'1.2-2' }}</td>
-                    </ng-container>
-
-                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-                  </table>
-                </ng-container>
-              </div>
-            </mat-tab>
-
-            <mat-tab label="Egresos">
-              <div class="py-6">
-                <ng-container *ngIf="expensesList.length; else emptyState">
-                  <table mat-table [dataSource]="expensesList" class="w-full mat-elevation-z0">
-                    <ng-container matColumnDef="date">
-                      <th mat-header-cell *matHeaderCellDef>Fecha</th>
-                      <td mat-cell *matCellDef="let r">{{ r.date | date:'shortDate' }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="concept">
-                      <th mat-header-cell *matHeaderCellDef>Concepto</th>
-                      <td mat-cell *matCellDef="let r">{{ r.concept }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="amount">
-                      <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
-                      <td mat-cell *matCellDef="let r" class="text-right">Q {{ r.amount | number:'1.2-2' }}</td>
-                    </ng-container>
-
-                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-                  </table>
-                </ng-container>
-              </div>
-            </mat-tab>
-          </mat-tab-group>
-
-          <!-- Empty state -->
-          <ng-template #emptyState>
-            <div class="flex flex-col items-center justify-center py-16 text-center">
-              <mat-icon class="!text-6xl text-gray-300 mb-4">credit_card</mat-icon>
-              <p class="text-gray-500 mb-4">Aún no tienes registros creados en esta fecha.</p>
-              <button mat-flat-button color="primary" class="rounded-xl px-5">Crear un movimiento</button>
+              <div class="text-2xl font-semibold mt-1">Q {{ kpis.balance | number:'1.0-0' }}</div>
             </div>
-          </ng-template>
+          </mat-card>
 
-        </div>
-      </mat-tab>
+          <mat-card class="rounded-2xl shadow-sm">
+            <div class="p-4">
+              <div class="flex items-center gap-2 text-emerald-600">
+                <mat-icon>attach_money</mat-icon> <span>Ventas totales</span>
+              </div>
+              <div class="text-2xl font-semibold mt-1">Q {{ kpis.sales | number:'1.0-0' }}</div>
+            </div>
+          </mat-card>
 
-      <mat-tab label="Cierres de caja">
-        <div class="p-6 text-gray-500">
-          <!-- contenido de cierres de caja (pendiente) -->
-          Aún no hay cierres de caja.
+          <mat-card class="rounded-2xl shadow-sm">
+            <div class="p-4">
+              <div class="flex items-center gap-2 text-rose-600">
+                <mat-icon>money_off</mat-icon> <span>Gastos totales</span>
+              </div>
+              <div class="text-2xl font-semibold mt-1">Q {{ kpis.expenses | number:'1.0-0' }}</div>
+            </div>
+          </mat-card>
         </div>
-      </mat-tab>
-    </mat-tab-group>
-  </section>
+
+        <!-- Subtabs: Ingresos / Egresos -->
+        <mat-tab-group style="background-color: transparent;">
+          <mat-tab label="Ingresos">
+            <div class="py-6">
+              <!-- Ventas del día -->
+              <ng-container *ngIf="sales.length; else emptyState">
+                <table mat-table [dataSource]="sales" class="w-full mat-elevation-z0">
+
+                  <!-- Fecha / hora -->
+                  <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                    <td mat-cell *matCellDef="let s">
+                      {{ (s.createdAt || s.date) | date:'dd/MM HH:mm' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Concepto / cliente -->
+                  <ng-container matColumnDef="concept">
+                    <th mat-header-cell *matHeaderCellDef>Concepto</th>
+                    <td mat-cell *matCellDef="let s">
+                      {{ s.customer?.name || 'Venta mostrador' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Total -->
+                  <ng-container matColumnDef="total">
+                    <th mat-header-cell *matHeaderCellDef class="text-right">Total</th>
+                    <td mat-cell *matCellDef="let s" class="text-right">
+                      Q {{ s.total | number:'1.2-2' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Método de pago -->
+                  <ng-container matColumnDef="method">
+                    <th mat-header-cell *matHeaderCellDef class="text-right">Método</th>
+                    <td mat-cell *matCellDef="let s" class="text-right">
+                      {{ s.payment?.method || '-' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Ticket -->
+                  <ng-container matColumnDef="ticket">
+                    <th mat-header-cell *matHeaderCellDef class="text-right">Ticket</th>
+                    <td mat-cell *matCellDef="let s" class="text-right">
+                      <button mat-stroked-button color="primary" class="rounded-xl px-3 text-xs"
+                        (click)="openTicket(s._id)">
+                        Ver ticket
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedSalesColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedSalesColumns;"></tr>
+                </table>
+              </ng-container>
+            </div>
+          </mat-tab>
+
+
+          <mat-tab label="Egresos">
+            <div class="py-6">
+              <ng-container *ngIf="expensesList.length; else emptyState">
+                <table mat-table [dataSource]="expensesList" class="w-full mat-elevation-z0">
+                  <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                    <td mat-cell *matCellDef="let r">{{ r.date | date:'shortDate' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="concept">
+                    <th mat-header-cell *matHeaderCellDef>Concepto</th>
+                    <td mat-cell *matCellDef="let r">{{ r.concept }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
+                    <td mat-cell *matCellDef="let r" class="text-right">Q {{ r.amount | number:'1.2-2' }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+              </ng-container>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+
+        <!-- Empty state -->
+        <ng-template #emptyState>
+          <div class="flex flex-col items-center justify-center py-16 text-center">
+            <mat-icon class="!text-6xl text-gray-300 mb-4">credit_card</mat-icon>
+            <p class="text-gray-500 mb-4">Aún no tienes registros creados en esta fecha.</p>
+            <button mat-flat-button color="primary" class="rounded-xl px-5">Crear un movimiento</button>
+          </div>
+        </ng-template>
+
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Cierres de caja">
+      <div class="p-6 text-gray-500">
+        <!-- contenido de cierres de caja (pendiente) -->
+        Aún no hay cierres de caja.
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</section>

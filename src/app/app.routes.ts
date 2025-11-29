@@ -8,6 +8,11 @@ export const routes: Routes = [
     path: 'login', loadComponent: () => import('./auth/pages/login/auth.component'),
     canActivate: [publicGuard],
   },
+    {
+    path: 'ticket/:id',
+    loadComponent: () =>
+      import('./sales/pages/sale-ticket/sale-ticket.component'),
+  },
   {
     //path principal del home
     path: 'home', loadComponent: () => import('./layouts/home-layout/home-layout.component'),
@@ -32,8 +37,23 @@ export const routes: Routes = [
       },
       //path principal de las ventas
       {
-        path: 'sales', loadComponent: () => import('./sales/sales.component'),
+        path: 'sales',
+        canActivate: [authGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./sales/sales.component'),
+          },
+          {
+            path: 'free',
+            loadComponent: () =>
+              import('./sales/pages/free-sale/free-sale.component')
+          },
+
+        ],
       },
+
     ]
   },
   {

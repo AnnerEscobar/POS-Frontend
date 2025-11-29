@@ -1,0 +1,113 @@
+.ticket-page {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f5f5f5;
+}
+
+.toolbar {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ticket-container {
+  width: 100%;
+  max-width: 80mm; /* ancho típico de rollo */
+  background: #fff;
+  padding: 8px;
+  font-family: monospace, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 11px;
+  color: #111;
+  border: 1px solid #eee;
+}
+
+/* Encabezado */
+.ticket-header {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ticket-store-name {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.ticket-store-extra {
+  font-size: 10px;
+}
+
+/* Info venta */
+.ticket-info {
+  margin-bottom: 4px;
+}
+
+/* Items */
+.ticket-items-header,
+.ticket-item-row {
+  display: grid;
+  grid-template-columns: 2fr 0.7fr 1fr 1fr;
+  gap: 2px;
+}
+
+.ticket-items-header {
+  font-weight: 600;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+
+.ticket-item-row {
+  margin-bottom: 2px;
+}
+
+.item-name {
+  word-break: break-word;
+}
+
+/* Totales */
+.ticket-totals {
+  margin-top: 4px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.ticket-divider {
+  border-top: 1px dashed #000;
+  margin: 4px 0;
+}
+
+/* Footer */
+.ticket-footer {
+  text-align: center;
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+/* Reglas de impresión */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .ticket-page {
+    padding: 0;
+    background: #fff;
+  }
+
+
+}

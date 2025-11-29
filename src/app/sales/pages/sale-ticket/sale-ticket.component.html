@@ -1,0 +1,112 @@
+<div class="ticket-page">
+
+   <div class="no-print">
+    <h1>Ticket de prueba</h1>
+  </div>
+
+  <!-- Controles que NO se imprimen -->
+  <div class="no-print toolbar">
+    <button mat-button (click)="backToSales()">Volver</button>
+    <button mat-raised-button color="primary" (click)="print()">Imprimir</button>
+  </div>
+
+  <div *ngIf="loading" class="ticket-container">
+    Cargando venta...
+  </div>
+
+  <div *ngIf="error && !loading" class="ticket-container">
+    {{ error }}
+  </div>
+
+  <div *ngIf="sale && !loading" id="ticket" class="ticket-container">
+    <!-- ENCABEZADO -->
+    <div class="ticket-header">
+      <div class="ticket-store-name">MI NEGOCIO</div>
+      <div class="ticket-store-extra">
+        NIT: 1234567-8<br>
+        Dirección: Ciudad de Guatemala<br>
+        Tel: 0000-0000
+      </div>
+    </div>
+
+    <div class="ticket-divider"></div>
+
+    <!-- INFO VENTA -->
+ <!-- INFO VENTA -->
+<div class="ticket-info">
+  <div>Factura: {{ sale._id }}</div>
+
+  <div>
+    Fecha:
+    {{ (sale.createdAt || sale.date) | date:'dd/MM/yyyy HH:mm' }}
+  </div>
+
+  <div *ngIf="sale.customer?.name">
+    Cliente: {{ sale.customer?.name }}
+  </div>
+
+  <div *ngIf="sale.customer?.nit">
+    NIT: {{ sale.customer?.nit }}
+  </div>
+</div>
+
+
+
+    <div class="ticket-divider"></div>
+
+    <!-- ITEMS -->
+    <div class="ticket-items">
+      <div class="ticket-items-header">
+        <span>Detalle</span>
+        <span>Cant</span>
+        <span>Precio</span>
+        <span>Subt.</span>
+      </div>
+
+      <div
+        class="ticket-item-row"
+        *ngFor="let item of sale.items">
+        <span class="item-name">{{ item.name }}</span>
+        <span class="item-qty">{{ item.quantity }}</span>
+        <span class="item-price">Q {{ item.price | number:'1.2-2' }}</span>
+        <span class="item-subtotal">Q {{ item.subtotal | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="ticket-divider"></div>
+
+    <!-- TOTALES -->
+    <div class="ticket-totals">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span>Q {{ sale.subtotal || sale.total | number:'1.2-2' }}</span>
+      </div>
+      <div *ngIf="sale.discount && sale.discount > 0" class="total-row">
+        <span>Descuento</span>
+        <span>- Q {{ sale.discount | number:'1.2-2' }}</span>
+      </div>
+      <div class="total-row total-strong">
+        <span>Total</span>
+        <span>Q {{ sale.total | number:'1.2-2' }}</span>
+      </div>
+
+      <div *ngIf="sale.payment">
+        <div class="total-row">
+          <span>Pagó ({{ sale.payment.method }})</span>
+          <span>Q {{ sale.payment.paid | number:'1.2-2' }}</span>
+        </div>
+        <div class="total-row">
+          <span>Cambio</span>
+          <span>Q {{ sale.payment.change | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-divider"></div>
+
+    <!-- FOOTER -->
+    <div class="ticket-footer">
+      ¡Gracias por su compra!
+    </div>
+  </div>
+</div>
