@@ -72,7 +72,7 @@ export default class FreeSaleComponent implements OnInit {
     return this.serviceItems.reduce((sum, item) => sum + item.subtotal, 0);
   }
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit(): void {
     // recalcular cambio cuando cambien pago o método
@@ -175,12 +175,12 @@ export default class FreeSaleComponent implements OnInit {
 
     const payload: CreateSalePayload = {
       items: this.serviceItems.map(item => ({
+        productId: null,
         name: item.type,
         price: item.unitPrice,
         quantity: item.quantity,
         subtotal: item.subtotal,
         code: null,
-        productId: ''
       })),
       total,
       customer: {

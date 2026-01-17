@@ -2,11 +2,21 @@
   <!-- Header + acciones -->
   <div class="flex items-center justify-between mb-3">
     <h1 class="text-2xl md:text-3xl font-semibold text-gray-800">Movimientos</h1>
-    <div class="flex gap-3">
-      <button mat-stroked-button color="primary" class="rounded-xl px-4">Abrir caja</button>
+    <div class="flex gap-3 items-center">
+      <span *ngIf="cash && cash.status === 'open'"
+        class="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">
+        Caja abierta · Q {{ cash.initialAmount | number:'1.2-2' }}
+      </span>
+
+      <button mat-stroked-button color="primary" class="rounded-xl px-4" (click)="toggleOpenCashForm()"
+        [disabled]="cash && cash.status === 'open'">
+        Abrir caja
+      </button>
+
       <button mat-stroked-button class="rounded-xl px-4">Descargar reporte</button>
     </div>
   </div>
+
 
   <!-- Tabs principales -->
   <mat-tab-group class="bg-white rounded-xl border border-gray-200" dynamicHeight>
@@ -14,7 +24,8 @@
       <div class="p-4 md:p-5 space-y-4">
 
         <!-- Filtros -->
-        <div class="flex flex-wrap items-center gap-3">
+        <!-- Filtros -->
+        <div class="flex flex-wrap items-center gap-3" [formGroup]="form">
           <button mat-stroked-button [matMenuTriggerFor]="filterMenu" class="rounded-xl">
             <mat-icon class="mr-2">tune</mat-icon> Filtrar
           </button>
@@ -24,28 +35,95 @@
             <button mat-menu-item>Solo egresos</button>
           </mat-menu>
 
+          <!-- PERIODO -->
           <mat-form-field appearance="outline" class="w-36">
             <mat-label>Periodo</mat-label>
-            <mat-select >
+            <mat-select formControlName="period">
               <mat-option value="day">Diario</mat-option>
               <mat-option value="week">Semanal</mat-option>
               <mat-option value="month">Mensual</mat-option>
             </mat-select>
           </mat-form-field>
 
+          <!-- FECHA -->
           <mat-form-field appearance="outline" class="w-44">
             <mat-label>Fecha</mat-label>
-            <input matInput >
+            <input matInput [matDatepicker]="picker" formControlName="date">
             <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
             <mat-datepicker #picker></mat-datepicker>
           </mat-form-field>
 
+          <!-- BUSCAR CONCEPTO -->
           <mat-form-field appearance="outline" class="min-w-[220px] flex-1">
             <mat-label>Buscar concepto…</mat-label>
-            <input matInput >
+            <input matInput formControlName="search">
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
         </div>
+
+        <!-- Rango visible -->
+        <div *ngIf="rangeFrom && rangeTo" class="mt-1 text-sm text-gray-500 flex items-center gap-2">
+          <mat-icon class="!text-base">event</mat-icon>
+
+          <ng-container [ngSwitch]="form.get('period')?.value">
+            <span *ngSwitchCase="'day'">
+              Mostrando ventas del
+              <strong>{{ rangeFrom | date:'dd/MM/yyyy' }}</strong>
+            </span>
+
+            <span *ngSwitchCase="'week'">
+              Mostrando ventas de la semana:
+              <strong>{{ rangeFrom | date:'dd/MM/yyyy' }}</strong>
+              al
+              <strong>{{ rangeTo | date:'dd/MM/yyyy' }}</strong>
+            </span>
+
+            <span *ngSwitchCase="'month'">
+              Mostrando ventas del mes:
+              <strong>{{ rangeFrom | date:'dd/MM/yyyy' }}</strong>
+              al
+              <strong>{{ rangeTo | date:'dd/MM/yyyy' }}</strong>
+            </span>
+
+            <span *ngSwitchDefault>
+              Rango:
+              <strong>{{ rangeFrom | date:'dd/MM/yyyy' }}</strong>
+              -
+              <strong>{{ rangeTo | date:'dd/MM/yyyy' }}</strong>
+            </span>
+          </ng-container>
+        </div>
+
+        <!-- Panel de apertura de caja -->
+        <div *ngIf="showOpenCashForm && (!cash || cash.status !== 'open')" class="mt-3">
+          <mat-card class="rounded-2xl shadow-sm max-w-md">
+            <form class="p-4 space-y-3" [formGroup]="openCashForm" (ngSubmit)="onOpenCash()">
+              <h2 class="text-lg font-semibold text-gray-800 mb-1">Apertura de caja</h2>
+              <p class="text-xs text-gray-500 mb-2">
+                Ingresa el monto inicial en efectivo con el que comienza tu turno.
+              </p>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Monto inicial</mat-label>
+                <input matInput type="number" formControlName="initialAmount">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Notas (opcional)</mat-label>
+                <textarea matInput formControlName="notes" rows="2"></textarea>
+              </mat-form-field>
+
+              <div class="flex justify-end gap-2">
+                <button mat-button type="button" (click)="toggleOpenCashForm()">Cancelar</button>
+                <button mat-flat-button color="primary" type="submit" [disabled]="openCashForm.invalid || loadingCash">
+                  Abrir caja
+                </button>
+              </div>
+            </form>
+          </mat-card>
+        </div>
+
+
 
         <!-- KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -83,7 +161,7 @@
             <div class="py-6">
               <!-- Ventas del día -->
               <ng-container *ngIf="sales.length; else emptyState">
-                <table mat-table [dataSource]="sales" class="w-full mat-elevation-z0">
+                <table mat-table [dataSource]="filteredSales" class="w-full mat-elevation-z0">
 
                   <!-- Fecha / hora -->
                   <ng-container matColumnDef="date">
@@ -174,10 +252,60 @@
     </mat-tab>
 
     <mat-tab label="Cierres de caja">
-      <div class="p-6 text-gray-500">
-        <!-- contenido de cierres de caja (pendiente) -->
-        Aún no hay cierres de caja.
+      <div class="p-6 text-gray-700 space-y-4">
+
+        <ng-container *ngIf="cash && cash.status === 'open'; else noOpenCash">
+          <h2 class="text-lg font-semibold">Cierre de caja</h2>
+
+          <p class="text-sm text-gray-500">
+            Caja abierta el
+            <strong>{{ cash.openingTime | date:'dd/MM/yyyy HH:mm' }}</strong>,
+            con fondo inicial de
+            <strong>Q {{ cash.initialAmount | number:'1.2-2' }}</strong>.
+          </p>
+
+          <form class="mt-4 max-w-md space-y-3" [formGroup]="closeCashForm" (ngSubmit)="onCloseCash()">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Dinero contado en caja</mat-label>
+              <input matInput type="number" formControlName="closingAmount">
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" type="submit" [disabled]="closeCashForm.invalid || loadingCash">
+              Cerrar caja
+            </button>
+          </form>
+        </ng-container>
+
+        <ng-template #noOpenCash>
+          <ng-container *ngIf="cash && cash.status === 'closed'; else noCash">
+            <h2 class="text-lg font-semibold mb-2">Último cierre de caja</h2>
+            <p class="text-sm text-gray-500 mb-2">
+              Cerrada el
+              <strong>{{ cash.closingTime | date:'dd/MM/yyyy HH:mm' }}</strong>.
+            </p>
+            <p class="text-sm">
+              Fondo inicial: <strong>Q {{ cash.initialAmount | number:'1.2-2' }}</strong><br>
+              Contado al cierre: <strong>Q {{ cash.closingAmount | number:'1.2-2' }}</strong><br>
+              Esperado: <strong>Q {{ cash.expectedAmount | number:'1.2-2' }}</strong><br>
+              Diferencia:
+              <strong [ngClass]="{
+              'text-emerald-600': (cash.difference || 0) > 0,
+              'text-rose-600': (cash.difference || 0) < 0
+            }">
+                Q {{ cash.difference | number:'1.2-2' }}
+              </strong>
+            </p>
+          </ng-container>
+
+          <ng-template #noCash>
+            <p class="text-gray-500">
+              Aún no hay caja abierta ni cierres registrados para este usuario.
+            </p>
+          </ng-template>
+        </ng-template>
+
       </div>
     </mat-tab>
+
   </mat-tab-group>
 </section>

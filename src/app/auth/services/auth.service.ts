@@ -14,35 +14,32 @@ export class AuthService {
 
   private api = environment.apiUrl; // o usa environment
 
-  login(email: string, password: string): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${this.api}/auth/login`, { email, password })
-      .pipe(
-        tap(res => {
-          this.state.setSession(res);
-        })
-      );
+login(businessCode: string, email: string, password: string): Observable<LoginResponse> {
+  return this.http
+    .post<LoginResponse>(`${this.api}/auth/login`, { businessCode, email, password })
+    .pipe(tap(res => this.state.setSession(res)));
+}
+
+
+refresh() {
+  const refreshToken = this.state.refreshToken();
+
+  if (!refreshToken) {
+    throw new Error('No refresh info');
   }
 
-  refresh() {
-    const user = this.state.user();
-    const refreshToken = this.state.refreshToken();
+  return this.http
+    .post<{ accessToken: string; refreshToken: string }>(
+      `${this.api}/auth/refresh`,
+      { refreshToken }
+    )
+    .pipe(
+      tap(tokens => {
+        this.state.updateTokens(tokens.accessToken, tokens.refreshToken);
+      })
+    );
+}
 
-    if (!user || !refreshToken) {
-      throw new Error('No refresh info');
-    }
-
-    return this.http
-      .post<{ accessToken: string; refreshToken: string }>(
-        `${this.api}/auth/refresh`,
-        { userId: user.id, refreshToken }
-      )
-      .pipe(
-        tap(tokens => {
-          this.state.updateTokens(tokens.accessToken, tokens.refreshToken);
-        })
-      );
-  }
 
   logout() {
     // Avisamos al backend pero no esperamos respuesta

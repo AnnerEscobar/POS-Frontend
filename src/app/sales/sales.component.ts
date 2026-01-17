@@ -90,6 +90,8 @@ export default class SalesComponent implements OnInit {
   products: SaleProduct[] = [];
   filteredProducts: SaleProduct[] = [];
   @ViewChild('paidInput') paidInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('scannerInput') scannerInput?: ElementRef<HTMLInputElement>;
+
 
 
   cart: CartItem[] = [];
@@ -114,7 +116,20 @@ export default class SalesComponent implements OnInit {
     this.form.controls.search.valueChanges.subscribe((value) => {
       this.onSearchChange((value ?? '').toString());
     });
+    setTimeout(() => this.focusScanner(), 0);
+
   }
+
+  private focusScanner() {
+    setTimeout(() => {
+      const el = this.scannerInput?.nativeElement;
+      if (!el) return;
+      el.focus();
+      el.select();
+    }, 0);
+  }
+
+
 
   // ------------ Productos / filtros ------------
   loadProducts(search?: string) {
@@ -152,29 +167,34 @@ export default class SalesComponent implements OnInit {
   }
 
   onScanEnter() {
-    const term = this.searchTerm.trim();
+    const term = (this.form.controls.search.value ?? '').toString().trim();
     if (!term) return;
 
-    let found = this.products.find((p) => p.code === term);
+    // 1) Match exacto por código (scanner)
+    let found = this.products.find(p => (p.code ?? '').trim() === term);
 
+    // 2) Fallback: buscar por nombre
     if (!found) {
       const lower = term.toLowerCase();
-      found = this.products.find((p) =>
-        p.name.toLowerCase().includes(lower),
-      );
+      found = this.products.find(p => p.name.toLowerCase().includes(lower));
     }
 
-    if (found) {
-      this.addToCart(found);
-      this.searchTerm = '';
-      this.form.controls.search.setValue('');
-      this.applyFilters();
-    } else {
-      this.snackBar.open('Producto no encontrado', 'Cerrar', {
-        duration: 2000,
-      });
+    if (!found) {
+      this.snackBar.open('Producto no encontrado', 'Cerrar', { duration: 1500 });
+      this.focusScanner();
+      return;
     }
+
+    // Agrega o incrementa
+    this.addToCart(found, { ignorePaymentMode: true });
+
+    // Limpiar input
+    this.form.controls.search.setValue('', { emitEvent: true });
+
+    // Volver a enfocar para seguir escaneando
+    this.focusScanner();
   }
+
 
   selectCategory(category: string | null) {
     this.selectedCategory = category;
@@ -211,9 +231,10 @@ export default class SalesComponent implements OnInit {
   }
 
   // ------------ Carrito ------------
-  addToCart(product: SaleProduct) {
-    // 👇 Si ya estamos en modo pago, ignorar clics
-    if (this.paymentMode) return;
+  addToCart(product: SaleProduct, opts?: { ignorePaymentMode?: boolean }) {
+    // Si estás en pago, normalmente bloqueas clicks.
+    // Para scanner, permitimos sumar items.
+    if (this.paymentMode && !opts?.ignorePaymentMode) return;
 
     const existing = this.cart.find((c) => c.productId === product.id);
 
@@ -221,6 +242,7 @@ export default class SalesComponent implements OnInit {
       if (existing.quantity < product.stock) {
         existing.quantity++;
         existing.subtotal = existing.quantity * existing.price;
+        this.updateChange(); // ✅ si estás en pago, recalcula el vuelto
       } else {
         this.snackBar.open('No hay más existencias de este producto', 'Cerrar', {
           duration: 2000,
@@ -244,7 +266,10 @@ export default class SalesComponent implements OnInit {
       subtotal: product.price,
       code: product.code,
     });
+
+    this.updateChange(); // ✅ si estás en pago
   }
+
 
 
   countInCart(productId: string): number {
@@ -333,7 +358,9 @@ export default class SalesComponent implements OnInit {
 
   cancelPayment() {
     this.paymentMode = false;
+    this.focusScanner();
   }
+
 
   confirmPayment() {
     if (this.cart.length === 0) return;
@@ -396,7 +423,7 @@ export default class SalesComponent implements OnInit {
         );
 
         // 2) Abrimos el ticket en una pestaña nueva SÓLO con el recibo
-        window.open(url, '_blank');
+        window.open(url, 'ticket', 'width=420,height=700');
 
         // Refrescamos productos desde backend (como ya lo hacías)
         this.loadProducts(this.searchTerm || '');
@@ -431,10 +458,21 @@ export default class SalesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al registrar la venta', err);
-        this.snackBar.open('Error al registrar la venta', 'Cerrar', {
-          duration: 3000,
-        });
+
+        const msg = err?.error?.message ?? '';
+
+        if (typeof msg === 'string' && msg.toLowerCase().includes('caja abierta')) {
+          this.snackBar
+            .open('Debes abrir caja antes de vender.', 'Abrir caja', { duration: 5000 })
+            .onAction()
+            .subscribe(() => this.router.navigate(['/home/cash'])); // ajusta tu ruta real
+
+          return;
+        }
+
+        this.snackBar.open('Error al registrar la venta', 'Cerrar', { duration: 3000 });
       },
+
     });
 
   }

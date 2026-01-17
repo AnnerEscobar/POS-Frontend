@@ -38,32 +38,35 @@ export default class AuthComponent {
   loading = false;
   errorMsg: string | null = null;
 
-  form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-  });
+ form = this.fb.group({
+  businessCode: ['', [Validators.required, Validators.minLength(3)]],
+  email: ['', [Validators.required, Validators.email]],
+  password: ['', [Validators.required, Validators.minLength(6)]],
+});
 
   get email() { return this.form.controls.email; }
   get password() { return this.form.controls.password; }
+  get businessCode() { return this.form.controls.businessCode; }
 
 
   submit() {
-    if (this.form.invalid || this.loading) return;
+  if (this.form.invalid || this.loading) return;
 
-    this.loading = true;
-    const { email, password } = this.form.value;
+  this.loading = true;
+  const { businessCode, email, password } = this.form.value;
 
-    this.auth.login(email!, password!).subscribe({
-      next: () => {
-        this.loading = false;
-        this.router.navigateByUrl('/home/inventory');
-      },
-      error: (err) => {
-        this.loading = false;
-        console.error(err);
-        // luego metemos snackbar chulo
-      },
-    });
-  }
+  this.auth.login(businessCode!, email!, password!).subscribe({
+    next: () => {
+      this.loading = false;
+      this.router.navigateByUrl('/home/inventory');
+    },
+    error: (err) => {
+      this.loading = false;
+      console.error(err);
+      this.errorMsg = err?.error?.message ?? 'Error al iniciar sesión';
+    },
+  });
+}
+
 
 }

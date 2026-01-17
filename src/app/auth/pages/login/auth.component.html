@@ -7,20 +7,27 @@
 
     <form class="grid gap-5" [formGroup]="form" (ngSubmit)="submit()">
       <div>
+        <label for="businessCode" class="block text-sm font-medium text-gray-700 mb-1">
+          Código de negocio
+        </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput id="businessCode" formControlName="businessCode" type="text" placeholder="Ej: TIENDA-ROSA"
+            autocomplete="organization" />
+          <mat-error *ngIf="businessCode.hasError('required')">El código es obligatorio</mat-error>
+          <mat-error *ngIf="businessCode.hasError('minlength')">Mínimo 3 caracteres</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div>
         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
           Correo electrónico
         </label>
         <mat-form-field appearance="outline" class="w-full">
-          <input
-            matInput
-            id="email"
-            formControlName="email"
-            type="email"
-            placeholder="tucorreo@dominio.com"
-            autocomplete="email"
-          />
+          <input matInput id="email" formControlName="email" type="email" placeholder="tucorreo@dominio.com"
+            autocomplete="email" />
           <mat-error *ngIf="email.hasError('required')">El email es obligatorio</mat-error>
-          <mat-error *ngIf="email.hasError('email') && !email.hasError('required')">Formato de email inválido</mat-error>
+          <mat-error *ngIf="email.hasError('email') && !email.hasError('required')">Formato de email
+            inválido</mat-error>
         </mat-form-field>
       </div>
 
@@ -29,21 +36,10 @@
           Contraseña
         </label>
         <mat-form-field appearance="outline" class="w-full">
-          <input
-            matInput
-            id="password"
-            [type]="hide ? 'password' : 'text'"
-            formControlName="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-          />
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="hide = !hide"
-            [attr.aria-label]="'Mostrar u ocultar contraseña'"
-          >
+          <input matInput id="password" [type]="hide ? 'password' : 'text'" formControlName="password"
+            placeholder="••••••••" autocomplete="current-password" />
+          <button mat-icon-button matSuffix type="button" (click)="hide = !hide"
+            [attr.aria-label]="'Mostrar u ocultar contraseña'">
             <mat-icon>{{ hide ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
           <mat-error *ngIf="password.hasError('required')">La contraseña es obligatoria</mat-error>
@@ -51,15 +47,10 @@
         </mat-form-field>
       </div>
 
-      <button
-        mat-flat-button
-        color="primary"
-        class="h-11 rounded-xl text-white font-medium tracking-wide"
-        [disabled]="form.invalid || loading"
-        type="submit"
-      >
+      <button mat-flat-button color="primary" class="h-11 rounded-xl text-white font-medium tracking-wide"
+        [disabled]="form.invalid || loading" type="submit">
         @if (!loading) { Entrar } @else {
-          <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+        <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
         }
       </button>
 

@@ -7,13 +7,14 @@ export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'mixto';
 
 /** Lo que mandas al backend en cada item al crear la venta */
 export interface SaleItemPayload {
-  productId: string;
+  productId?: string | null; // ✅ ahora opcional
   name: string;
   price: number;
   quantity: number;
   subtotal: number;
   code?: string | null;
 }
+
 
 /** Payload que usas para crear una venta */
 export interface CreateSalePayload {

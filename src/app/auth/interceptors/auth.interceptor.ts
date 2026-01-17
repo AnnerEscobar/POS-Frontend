@@ -7,9 +7,14 @@ import { catchError, switchMap, throwError } from 'rxjs';
 let isRefreshing = false;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+
+    // ✅ NO interceptar rutas de auth para evitar loops (refresh/logout/login)
+  if (req.url.includes('/auth/')) {
+    return next(req);
+  }
+
   const state = inject(AuthStateService);
   const auth = inject(AuthService);
-
   const accessToken = state.accessToken();
 
   let cloned = req;
@@ -28,11 +33,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      const user = state.user();
       const refreshToken = state.refreshToken();
 
       // si no hay forma de refrescar, cerramos sesión
-      if (!user || !refreshToken || isRefreshing) {
+      if (!refreshToken || isRefreshing) {
         auth.logout();
         return throwError(() => error);
       }

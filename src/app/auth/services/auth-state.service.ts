@@ -3,10 +3,12 @@ import { inject, Injectable, signal } from '@angular/core';
 
 export interface AuthUser {
   id: string;
+  tenantId: string;  
   email: string;
   name?: string;
   role: string;
 }
+
 
 export interface LoginResponse {
   user: AuthUser;

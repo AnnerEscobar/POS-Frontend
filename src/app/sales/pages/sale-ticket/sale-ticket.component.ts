@@ -21,7 +21,7 @@ export default class SaleTicketComponent implements OnInit {
   loading = true;
   error = '';
 
-  ngOnInit(): void {
+ngOnInit(): void {
   const saleId = this.route.snapshot.paramMap.get('id');
   if (!saleId) {
     this.error = 'Venta no encontrada';
@@ -29,28 +29,32 @@ export default class SaleTicketComponent implements OnInit {
     return;
   }
 
-
   this.salesService.getSaleById(saleId).subscribe({
     next: (sale: Sale) => {
-      console.log('SALE DATA:', sale);
       this.sale = sale;
       this.loading = false;
 
-      setTimeout(() => {
-        window.print();
-      }, 400);
+      // Cuando termine de imprimir (o cancelen), cerrar esta pestaña/ventana
+      window.onafterprint = () => {
+        // evita dejar ventanas abiertas si fue popup
+        window.close();
+      };
+
+      // pequeño delay para que renderice antes de imprimir
+      setTimeout(() => window.print(), 300);
     },
     error: (err: any) => {
       console.error(err);
       this.error = 'Error al cargar la venta';
       this.loading = false;
-    }
+    },
   });
 }
 
-  print() {
-    window.print();
-  }
+ print() {
+  window.onafterprint = () => window.close();
+  window.print();
+}
 
   close() {
     // Si vino desde una pestaña nueva, esto intenta cerrarla
