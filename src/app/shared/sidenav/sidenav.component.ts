@@ -7,6 +7,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStateService } from '../../auth/services/auth-state.service';
+import { MatDialog } from '@angular/material/dialog';
+import { SettingsDialogComponent } from './modals/settings-dialog.component';
 
 export type SidenavItem = { label: string; icon: string; link: string };
 
@@ -33,6 +35,8 @@ export class SidenavComponent {
 
   auth = inject(AuthStateService);
   router = inject(Router);
+  dialog = inject(MatDialog);
+
 
   displayName = computed(() => {
     const u = this.auth.user();
@@ -58,6 +62,14 @@ export class SidenavComponent {
   logoutUiOnly() {
     this.auth.clear();
     this.router.navigate(['/login']);
+  }
+
+  openSettings() {
+    this.dialog.open(SettingsDialogComponent, {
+      panelClass: ['pos-dialog'],
+      autoFocus: false,
+    });
+
   }
 
 }

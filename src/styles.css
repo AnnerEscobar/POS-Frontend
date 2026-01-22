@@ -4,7 +4,8 @@
 @import "tailwindcss";
 
 /* Global styles */
-html, body {
+html,
+body {
   height: 100%;
   overscroll-behavior-y: contain;
 }
@@ -12,6 +13,43 @@ html, body {
 body {
   margin: 0;
   font-family: Roboto,
-  "Helvetica Neue", sans-serif;
+    "Helvetica Neue", sans-serif;
 }
 
+:root {
+  --pos-primary: 79 70 229;
+  /* indigo-600 rgb */
+  --pos-surface: 255 255 255;
+  --pos-text: 17 24 39;
+  /* gray-900 */
+}
+
+/* Temas */
+.theme-indigo {
+  --pos-primary: 79 70 229;
+}
+
+.theme-emerald {
+  --pos-primary: 16 185 129;
+}
+
+.theme-amber {
+  --pos-primary: 245 158 11;
+}
+
+.theme-slate {
+  --pos-primary: 71 85 105;
+}
+
+/* Ejemplo: botones Material “siguen” el color primary del theme */
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-fab.mat-primary,
+.mat-mdc-mini-fab.mat-primary {
+  --mdc-protected-button-container-color: rgb(var(--pos-primary)) !important;
+  --mdc-fab-container-color: rgb(var(--pos-primary)) !important;
+}
+
+/* Opcional: links/hover */
+.pos-accent {
+  color: rgb(var(--pos-primary));
+}

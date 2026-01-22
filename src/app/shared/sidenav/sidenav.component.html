@@ -65,10 +65,11 @@
   <!-- Footer Actions -->
   <div class="border-t border-gray-200 p-4">
     <div class="grid grid-cols-2 gap-2">
-      <button mat-flat-button type="button" class="w-full !rounded-xl">
+      <button mat-flat-button type="button" class="w-full !rounded-xl" (click)="openSettings()">
         <mat-icon class="mr-2">tune</mat-icon>
         Ajustes
       </button>
+
 
       <button mat-stroked-button type="button" class="w-full !rounded-xl" (click)="logoutUiOnly()">
         <mat-icon class="mr-2">logout</mat-icon>

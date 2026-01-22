@@ -5,6 +5,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterOutlet } from '@angular/router';
+import { MaterialThemeService } from './shared/theme/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -23,6 +24,9 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'frontend-pos';
+
+  constructor(private _theme: MaterialThemeService) {}
+
 
 
 }
