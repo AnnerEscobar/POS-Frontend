@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, computed, inject, Input, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthStateService } from '../../auth/services/auth-state.service';
 
 export type SidenavItem = { label: string; icon: string; link: string };
 
@@ -13,7 +14,7 @@ export type SidenavItem = { label: string; icon: string; link: string };
   selector: 'app-sidenav',
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.css'],
-  imports:[
+  imports: [
     CommonModule,
     MatSidenavModule,
     MatListModule,
@@ -27,6 +28,36 @@ export type SidenavItem = { label: string; icon: string; link: string };
 })
 export class SidenavComponent {
 
-@Input() items: SidenavItem[] = [];
+  @Input() items: SidenavItem[] = [];
+
+
+  auth = inject(AuthStateService);
+  router = inject(Router);
+
+  displayName = computed(() => {
+    const u = this.auth.user();
+    if (!u) return 'Invitado';
+    return u.name?.trim() || u.email;
+  });
+
+  displayRole = computed(() => {
+    const u = this.auth.user();
+    if (!u) return 'Sin sesión';
+    // Mapeo bonito (ajusta a tus roles reales)
+    const map: Record<string, string> = {
+      ADMIN: 'Administrador',
+      owner: 'Propietario',
+      CASHIER: 'Cajero',
+      CAJERO: 'Cajero',
+      MANAGER: 'Supervisor',
+      SUPERVISOR: 'Supervisor',
+    };
+    return map[u.role] ?? u.role;
+  });
+
+  logoutUiOnly() {
+    this.auth.clear();
+    this.router.navigate(['/login']);
+  }
 
 }
